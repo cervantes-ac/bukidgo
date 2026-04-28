@@ -50,7 +50,7 @@ export default function AdminDashboard() {
         await setDoc(doc(db, "guides", g.uid), g);
       }
       // Add self as admin if email matches
-      if (user?.email === "Admin@gmail.com") {
+      if (user?.email === "s.cervantes.aaronclyde@cmu.edu.ph") {
         await setDoc(doc(db, "admins", user.uid), {
           uid: user.uid,
           email: user.email
@@ -135,7 +135,7 @@ export default function AdminDashboard() {
       <div className="max-w-7xl mx-auto px-4 py-32 text-center">
         <h1 className="text-4xl font-serif font-bold text-forest mb-4">Access Denied</h1>
         <p className="text-stone/60 mb-8">You do not have administrative privileges.</p>
-        {user?.email === "Admin@gmail.com" && (
+        {user?.email === "s.cervantes.aaronclyde@cmu.edu.ph" && (
            <button 
              onClick={seedData}
              disabled={isSeeding}
