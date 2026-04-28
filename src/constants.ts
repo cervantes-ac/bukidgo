@@ -268,7 +268,7 @@ export const LOCAL_BUDDIES = [
     experience: "4 years",
     rating: 4.9,
     pricePerDay: 250,
-    photoURL: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=400",
+    photoURL: "/img/BukidGO/default-person.svg",
     bio: "Passionate about Bukidnon's agricultural tourism and local history."
   },
   {
@@ -277,7 +277,7 @@ export const LOCAL_BUDDIES = [
     experience: "5 years",
     rating: 5.0,
     pricePerDay: 300,
-    photoURL: "/img/BukidGO/default-person.svg",
+    photoURL: "/img/BukidGO/4.jpg",
     bio: "Expert mountaineer and adventure specialist. I'll take you to the highest peaks!"
   },
   {

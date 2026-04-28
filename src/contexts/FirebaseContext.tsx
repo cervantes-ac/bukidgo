@@ -26,31 +26,38 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const timeoutId = setTimeout(() => {
       if (loading) {
         console.warn("Firebase initialization timed out. The app may be in offline mode.");
-        setLoading(false);
+        setLoading(false); // Force loading to false after timeout
       }
-    }, 5000); // 5 second timeout
+    }, 3000); // Reduced to 3 seconds for faster recovery
 
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      clearTimeout(timeoutId);
-      setUser(user);
-      if (user) {
-        try {
-          const adminDoc = await getDoc(doc(db, 'admins', user.uid));
-          setIsAdmin(adminDoc.exists());
-        } catch (err) {
-          console.error("Error fetching admin status:", err);
+    try {
+      const unsubscribe = onAuthStateChanged(auth, async (user) => {
+        clearTimeout(timeoutId);
+        setUser(user);
+        if (user) {
+          try {
+            const adminDoc = await getDoc(doc(db, 'admins', user.uid));
+            setIsAdmin(adminDoc.exists());
+          } catch (err) {
+            console.error("Error fetching admin status:", err);
+            setIsAdmin(false);
+          }
+        } else {
           setIsAdmin(false);
         }
-      } else {
-        setIsAdmin(false);
-      }
-      setLoading(false);
-    });
+        setLoading(false);
+      });
 
-    return () => {
-      unsubscribe();
+      return () => {
+        unsubscribe();
+        clearTimeout(timeoutId);
+      };
+    } catch (error) {
+      console.error("Firebase initialization error:", error);
       clearTimeout(timeoutId);
-    };
+      setLoading(false); // Force loading to false on error
+      return () => clearTimeout(timeoutId);
+    }
   }, []); // Empty dependency array - run once on mount
 
   return (

@@ -1,10 +1,9 @@
 {
-  "projectId": "gen-lang-client-0382646303",
-  "appId": "1:806686890035:web:43bda0e6c00bbea3762b46",
-  "apiKey": "AIzaSyCXlwtVCutVXV4Bdr5Awnrobgf7DCox9po",
-  "authDomain": "gen-lang-client-0382646303.firebaseapp.com",
-  "firestoreDatabaseId": "ai-studio-4cf81194-a3e8-4cc2-95d8-28171f379a1c",
-  "storageBucket": "gen-lang-client-0382646303.firebasestorage.app",
-  "messagingSenderId": "806686890035",
-  "measurementId": ""
+  "apiKey": "AIzaSyCc6Xp8Y-drpzGwvsYGbkv7blGJDCp8gP4",
+  "authDomain": "bukidgo.firebaseapp.com",
+  "projectId": "bukidgo",
+  "storageBucket": "bukidgo.firebasestorage.app",
+  "messagingSenderId": "269521964107",
+  "appId": "1:269521964107:web:e569e79608a36280e7d1ce",
+  "measurementId": "G-BH1E0CX9P2"
 }

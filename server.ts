@@ -13,7 +13,7 @@ const __dirname = path.dirname(__filename);
 
 async function startServer() {
   const app = express();
-  const PORT = 3000;
+  const PORT = 3005;
 
   app.use(cors());
   app.use(express.json());
@@ -30,11 +30,12 @@ async function startServer() {
     }
 
     try {
-      const genAI = new GoogleGenAI(apiKey);
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
-      res.json({ text: response.text() });
+      const ai = new GoogleGenAI({ apiKey });
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: prompt,
+      });
+      res.json({ text: response.text });
     } catch (error) {
       console.error("Gemini Error:", error);
       res.status(500).json({ error: "Failed to generate itinerary" });
