@@ -1,6 +1,0 @@
-{
-  "name": "BukidGo",
-  "description": "Smart Travel Platform for Bukidnon - Discover tourist spots, food, and local buddies with AI-powered itineraries.",
-  "requestFramePermissions": ["geolocation"],
-  "majorCapabilities": []
-}
