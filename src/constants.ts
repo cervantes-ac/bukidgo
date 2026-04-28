@@ -268,7 +268,7 @@ export const LOCAL_BUDDIES = [
     experience: "4 years",
     rating: 4.9,
     pricePerDay: 250,
-    photoURL: "https://i.pravatar.cc/150?u=aguila",
+    photoURL: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=400",
     bio: "Passionate about Bukidnon's agricultural tourism and local history."
   },
   {
@@ -277,7 +277,7 @@ export const LOCAL_BUDDIES = [
     experience: "5 years",
     rating: 5.0,
     pricePerDay: 300,
-    photoURL: "https://i.pravatar.cc/150?u=alemanio",
+    photoURL: "/img/BukidGO/default-person.svg",
     bio: "Expert mountaineer and adventure specialist. I'll take you to the highest peaks!"
   },
   {
@@ -286,16 +286,16 @@ export const LOCAL_BUDDIES = [
     experience: "3 years",
     rating: 4.8,
     pricePerDay: 200,
-    photoURL: "https://i.pravatar.cc/150?u=rejean",
+    photoURL: "/img/BukidGO/1.jpg",
     bio: "Nature lover and waterfall chaser. Let's explore CEDAR together."
   },
   {
     uid: "buddy4",
-    name: "Yyan April Kaye S. Daligdig",
+    name: "Yyan April Kaye L. Daligdig",
     experience: "2 years",
     rating: 4.7,
     pricePerDay: 180,
-    photoURL: "https://i.pravatar.cc/150?u=yyan",
+    photoURL: "/img/BukidGO/5.jpg",
     bio: "Cultural preservationist and storyteller. Expert on Kaamulan traditions."
   },
   {
@@ -304,7 +304,7 @@ export const LOCAL_BUDDIES = [
     experience: "3 years",
     rating: 4.9,
     pricePerDay: 220,
-    photoURL: "https://i.pravatar.cc/150?u=uriah",
+    photoURL: "/img/BukidGO/2.jpg",
     bio: "Certified tour guide specializing in religious and heritage sites."
   },
   {
@@ -313,7 +313,7 @@ export const LOCAL_BUDDIES = [
     experience: "4 years",
     rating: 4.8,
     pricePerDay: 240,
-    photoURL: "https://i.pravatar.cc/150?u=jonaira",
+    photoURL: "/img/BukidGO/3.jpg",
     bio: "Food enthusiast and budget travel expert. I know the best Binaki spots!"
   },
   {
@@ -322,7 +322,7 @@ export const LOCAL_BUDDIES = [
     experience: "3 years",
     rating: 4.9,
     pricePerDay: 210,
-    photoURL: "https://i.pravatar.cc/150?u=daisy",
+    photoURL: "/img/BukidGO/6.jpg",
     bio: "Adventure-ready guide with a focus on family-friendly destinations."
   }
 ];
