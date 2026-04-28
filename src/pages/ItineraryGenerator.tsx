@@ -1,7 +1,6 @@
 import { useState, useRef } from "react";
 import { Sparkles, Send, Calendar, MapPin, Clock, DollarSign, Edit2, Download, ShieldCheck, Plus, Trash2, Save, X } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
-import { GoogleGenAI } from "@google/genai";
 import { cn } from "../lib/utils";
 import jsPDF from "jspdf";
 
@@ -99,48 +98,45 @@ export default function ItineraryGenerator() {
     setLoading(true);
     setError(null);
     try {
-      const apiKey = process.env.GEMINI_API_KEY;
-      if (!apiKey) {
-        throw new Error("Gemini API key is not configured. Please check your environment variables.");
-      }
-
-      const genAI = new GoogleGenAI({ apiKey });
-      
-      const prompt = `Generate a travel itinerary for Bukidnon, Philippines.
-      Trip Type: ${formData.tripType}
-      Duration: ${formData.duration} days
-      Budget: ${formData.budget}
-      Additional Preferences: ${formData.preferences}
-      
-      Please provide a JSON response with the following structure:
-      {
-        "title": "...",
-        "summary": "...",
-        "days": [
+      const response = await fetch("/api/generate-itinerary", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          prompt: `Generate a travel itinerary for Bukidnon, Philippines.
+          Trip Type: ${formData.tripType}
+          Duration: ${formData.duration} days
+          Budget: ${formData.budget}
+          Additional Preferences: ${formData.preferences}
+          
+          Please provide a JSON response with the following structure:
           {
-            "day": 1,
-            "activities": [
-              { "time": "08:00 AM", "activity": "...", "location": "...", "description": "..." }
-            ]
+            "title": "...",
+            "summary": "...",
+            "days": [
+              {
+                "day": 1,
+                "activities": [
+                  { "time": "08:00 AM", "activity": "...", "location": "...", "description": "..." }
+                ]
+              }
+            ],
+            "estimatedCost": "...",
+            "tips": ["..."]
           }
-        ],
-        "estimatedCost": "...",
-        "tips": ["..."]
-      }
-      Only return the JSON. Do not include markdown formatting.`;
-
-      const response = await genAI.models.generateContent({
-        model: "gemini-3-flash-preview",
-        contents: prompt
+          Only return the JSON. Do not include markdown formatting.`,
+        }),
       });
 
-      const responseText = response.text?.replace(/```json|```/g, "").trim();
-      if (!responseText) {
-        throw new Error("Empty response from AI");
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to generate itinerary");
       }
 
-      const data = JSON.parse(responseText);
-      setItinerary(data);
+      const data = await response.json();
+      const responseText = data.text.replace(/```json|```/g, "").trim();
+      setItinerary(JSON.parse(responseText));
     } catch (err: any) {
       console.error("Error generating itinerary:", err);
       setError(err.message || "Failed to generate itinerary. Please try again.");

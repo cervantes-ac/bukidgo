@@ -1,7 +1,8 @@
 {
   "name": "bukidgo",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "description": "BukidGo - A Premium Travel & Tourism Platform for Bukidnon, Philippines",
   "type": "module",
   "scripts": {
     "dev": "tsx server.ts",

@@ -18,6 +18,29 @@ async function startServer() {
   app.use(cors());
   app.use(express.json());
 
+  // API Route for Gemini
+  app.post("/api/generate-itinerary", async (req, res) => {
+    const { prompt } = req.body;
+    const apiKey = process.env.GEMINI_API_KEY;
+
+    if (!apiKey || apiKey === "MY_GEMINI_API_KEY") {
+      return res.status(400).json({ 
+        error: "Gemini API key not configured. Please add GEMINI_API_KEY to your .env file." 
+      });
+    }
+
+    try {
+      const genAI = new GoogleGenAI(apiKey);
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      res.json({ text: response.text() });
+    } catch (error) {
+      console.error("Gemini Error:", error);
+      res.status(500).json({ error: "Failed to generate itinerary" });
+    }
+  });
+
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({

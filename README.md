@@ -1,20 +1,47 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# BukidGo | Discover the Heart of Bukidnon
 
-# Run and deploy your AI Studio app
+BukidGo is a premium travel and tourism platform designed to showcase the beauty of Bukidnon, Philippines. From majestic mountains to local delicacies, BukidGo helps travelers plan their perfect highland getaway.
 
-This contains everything you need to run your app locally.
+## Features
 
-View your app in AI Studio: https://ai.studio/apps/4cf81194-a3e8-4cc2-95d8-28171f379a1c
+- **AI Itinerary Generator**: Get personalized travel plans powered by Google Gemini AI.
+- **Explore Destinations**: Discover hidden gems, nature spots, and cultural landmarks.
+- **Local Eats**: Find the best food spots in the province.
+- **Events & Guides**: Stay updated with local events and connect with professional guides.
+- **Booking System**: Book your favorite spots directly through the platform.
 
-## Run Locally
+## Setup Instructions
 
-**Prerequisites:**  Node.js
+### Prerequisites
+- Node.js (v18 or higher)
+- A Google Gemini API Key
+- A Firebase Project (for Authentication and Firestore)
 
+### 1. Install Dependencies
+```bash
+npm install
+```
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+### 2. Configure Environment Variables
+Create a `.env` file in the root directory (or update the existing one):
+```env
+GEMINI_API_KEY=your_gemini_api_key_here
+PORT=3000
+```
+
+### 3. Firebase Configuration
+Update `firebase-applet-config.json` with your Firebase project credentials.
+
+### 4. Run the Development Server
+```bash
+npm run dev
+```
+The app will be available at `http://localhost:3000`.
+
+## Tech Stack
+- **Frontend**: React, TypeScript, Tailwind CSS, Motion
+- **Backend**: Express, Node.js
+- **AI**: Google Gemini AI
+- **Database/Auth**: Firebase & Firestore
+- **PDF Generation**: jsPDF
+

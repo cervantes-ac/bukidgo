@@ -10,9 +10,11 @@ export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
   const handleGoogleSignIn = async () => {
+    setError(null);
     const provider = new GoogleAuthProvider();
     try {
       const result = await signInWithPopup(auth, provider);
@@ -25,13 +27,15 @@ export default function Auth() {
         createdAt: new Date().toISOString()
       }, { merge: true });
       navigate("/");
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
+      setError(error.message || "Failed to sign in with Google");
     }
   };
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
     try {
       if (isLogin) {
         await signInWithEmailAndPassword(auth, email, password);
@@ -45,8 +49,9 @@ export default function Auth() {
         });
       }
       navigate("/");
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
+      setError(error.message || "Authentication failed");
     }
   };
 
@@ -61,6 +66,12 @@ export default function Auth() {
           <h2 className="text-3xl font-serif font-bold text-forest">{isLogin ? "Welcome Back" : "Create Account"}</h2>
           <p className="text-stone/40 mt-2 font-medium">Access the best of Bukidnon tourism</p>
         </div>
+
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-100 text-red-600 rounded-2xl text-sm font-bold">
+            {error}
+          </div>
+        )}
 
         <div className="space-y-4 mb-8">
           <button 

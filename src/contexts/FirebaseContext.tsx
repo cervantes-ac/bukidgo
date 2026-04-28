@@ -23,19 +23,35 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (loading) {
+        console.warn("Firebase initialization timed out. The app may be in offline mode.");
+        setLoading(false);
+      }
+    }, 5000); // 5 second timeout
+
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      clearTimeout(timeoutId);
       setUser(user);
       if (user) {
-        const adminDoc = await getDoc(doc(db, 'admins', user.uid));
-        setIsAdmin(adminDoc.exists());
+        try {
+          const adminDoc = await getDoc(doc(db, 'admins', user.uid));
+          setIsAdmin(adminDoc.exists());
+        } catch (err) {
+          console.error("Error fetching admin status:", err);
+          setIsAdmin(false);
+        }
       } else {
         setIsAdmin(false);
       }
       setLoading(false);
     });
 
-    return () => unsubscribe();
-  }, []);
+    return () => {
+      unsubscribe();
+      clearTimeout(timeoutId);
+    };
+  }, [loading]);
 
   return (
     <FirebaseContext.Provider value={{ user, isAdmin, loading }}>
