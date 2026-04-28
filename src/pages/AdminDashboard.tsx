@@ -2,14 +2,14 @@ import React, { useState, useEffect } from "react";
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, setDoc } from "firebase/firestore";
 import { db, OperationType, handleFirestoreError } from "../lib/firebase";
 import { useFirebase } from "../contexts/FirebaseContext";
-import { DESTINATIONS, FOOD_SPOTS, EVENTS } from "../constants";
+import { DESTINATIONS, FOOD_SPOTS, EVENTS, LOCAL_BUDDIES } from "../constants";
 import { motion, AnimatePresence } from "motion/react";
-import { Plus, Trash2, Edit2, Save, X, Database, MapPin, Calendar, Utensils, Star } from "lucide-react";
+import { Plus, Trash2, Edit2, Save, X, Database, MapPin, Calendar, Utensils, Star, Users } from "lucide-react";
 import { cn } from "../lib/utils";
 
 export default function AdminDashboard() {
   const { user, isAdmin, loading } = useFirebase();
-  const [activeTab, setActiveTab] = useState<"destinations" | "foodSpots" | "events" | "bookings">("destinations");
+  const [activeTab, setActiveTab] = useState<"destinations" | "foodSpots" | "events" | "guides" | "bookings">("destinations");
   const [items, setItems] = useState<any[]>([]);
   const [isEditing, setIsEditing] = useState<any | null>(null);
   const [isAdding, setIsAdding] = useState(false);
@@ -44,6 +44,10 @@ export default function AdminDashboard() {
       // Seed Events
       for (const e of EVENTS) {
         await setDoc(doc(db, "events", e.id), e);
+      }
+      // Seed Guides
+      for (const g of LOCAL_BUDDIES) {
+        await setDoc(doc(db, "guides", g.uid), g);
       }
       // Add self as admin if email matches
       if (user?.email === "s.cervantes.aaronclyde@cmu.edu.ph") {
@@ -104,6 +108,11 @@ export default function AdminDashboard() {
             lat: parseFloat(data.lat as string) || 0,
             lng: parseFloat(data.lng as string) || 0
         };
+    } else if (activeTab === "guides") {
+        refinedData.rating = parseFloat(data.rating as string);
+        refinedData.pricePerDay = parseFloat(data.pricePerDay as string);
+        refinedData.photoURL = data.photoURL as string;
+        refinedData.uid = isEditing?.uid || Math.random().toString(36).substring(7);
     }
 
     try {
@@ -170,7 +179,7 @@ export default function AdminDashboard() {
       </div>
 
       <div className="flex gap-2 p-1 bg-clay/20 rounded-2xl border border-clay/30 w-fit mb-12 overflow-x-auto max-w-full">
-        {(["destinations", "foodSpots", "events", "bookings"] as const).map(tab => (
+        {(["destinations", "foodSpots", "events", "guides", "bookings"] as const).map(tab => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -255,13 +264,13 @@ export default function AdminDashboard() {
             >
               <div className="flex items-center gap-6">
                 <div className="w-20 h-20 rounded-2xl bg-linen overflow-hidden">
-                  <img src={item.images?.[0] || item.image} className="w-full h-full object-cover" alt="" />
+                  <img src={item.images?.[0] || item.image || item.photoURL} className="w-full h-full object-cover" alt="" />
                 </div>
                 <div>
                   <h3 className="text-2xl font-serif font-bold text-stone mb-1">{item.name}</h3>
                   <p className="text-stone/40 text-sm flex items-center gap-2">
                     <MapPin className="w-3 h-3" />
-                    {item.location?.address || item.location}
+                    {item.location?.address || item.location || item.bio}
                   </p>
                 </div>
               </div>
@@ -298,7 +307,7 @@ export default function AdminDashboard() {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-linen w-full max-w-2xl rounded-[3rem] p-12 border border-clay shadow-2xl relative"
+              className="bg-linen w-full max-w-2xl rounded-[3rem] p-12 border border-clay shadow-2xl relative max-h-[90vh] overflow-y-auto"
               onClick={e => e.stopPropagation()}
             >
               <button 
@@ -318,21 +327,67 @@ export default function AdminDashboard() {
                   <input name="name" defaultValue={isEditing?.name} className="w-full bg-white border border-clay rounded-2xl p-4 font-bold text-stone outline-none focus:ring-2 focus:ring-earth" required />
                 </div>
                 
-                <div>
-                  <label className="text-xs font-black uppercase tracking-widest text-stone/40 block mb-2">Description</label>
-                  <textarea name="description" defaultValue={isEditing?.description} className="w-full bg-white border border-clay rounded-2xl p-4 font-medium text-stone min-h-[100px] outline-none focus:ring-2 focus:ring-earth" required />
+                {activeTab !== "guides" && (
+                  <div>
+                    <label className="text-xs font-black uppercase tracking-widest text-stone/40 block mb-2">Description</label>
+                    <textarea name="description" defaultValue={isEditing?.description} className="w-full bg-white border border-clay rounded-2xl p-4 font-medium text-stone min-h-[100px] outline-none focus:ring-2 focus:ring-earth" required />
+                  </div>
+                )}
+
+                {activeTab === "guides" && (
+                  <div>
+                    <label className="text-xs font-black uppercase tracking-widest text-stone/40 block mb-2">Bio</label>
+                    <textarea name="bio" defaultValue={isEditing?.bio} className="w-full bg-white border border-clay rounded-2xl p-4 font-medium text-stone min-h-[100px] outline-none focus:ring-2 focus:ring-earth" required />
+                  </div>
+                )}
+
+                <div className="grid grid-cols-2 gap-4">
+                  {activeTab !== "guides" && (
+                    <div>
+                      <label className="text-xs font-black uppercase tracking-widest text-stone/40 block mb-2">Category</label>
+                      <input name="category" defaultValue={isEditing?.category} className="w-full bg-white border border-clay rounded-2xl p-4 font-bold text-stone outline-none focus:ring-2 focus:ring-earth" required />
+                    </div>
+                  )}
+                  {activeTab === "guides" && (
+                    <div>
+                      <label className="text-xs font-black uppercase tracking-widest text-stone/40 block mb-2">Experience</label>
+                      <input name="experience" defaultValue={isEditing?.experience} className="w-full bg-white border border-clay rounded-2xl p-4 font-bold text-stone outline-none focus:ring-2 focus:ring-earth" required />
+                    </div>
+                  )}
+                  <div>
+                    <label className="text-xs font-black uppercase tracking-widest text-stone/40 block mb-2">
+                      {activeTab === "foodSpots" ? "Price Range" : activeTab === "guides" ? "Price/Day" : activeTab === "events" ? "Date" : "Entrance Fee"}
+                    </label>
+                    <input name={activeTab === "foodSpots" ? "priceRange" : activeTab === "guides" ? "pricePerDay" : activeTab === "events" ? "date" : "entranceFee"} defaultValue={activeTab === "foodSpots" ? isEditing?.priceRange : activeTab === "guides" ? isEditing?.pricePerDay : activeTab === "events" ? isEditing?.date : isEditing?.entranceFee} className="w-full bg-white border border-clay rounded-2xl p-4 font-bold text-stone outline-none focus:ring-2 focus:ring-earth" required />
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="text-xs font-black uppercase tracking-widest text-stone/40 block mb-2">Category</label>
-                    <input name="category" defaultValue={isEditing?.category} className="w-full bg-white border border-clay rounded-2xl p-4 font-bold text-stone outline-none focus:ring-2 focus:ring-earth" required />
+                    <label className="text-xs font-black uppercase tracking-widest text-stone/40 block mb-2">Rating</label>
+                    <input name="rating" type="number" step="0.1" defaultValue={isEditing?.rating} className="w-full bg-white border border-clay rounded-2xl p-4 font-bold text-stone outline-none focus:ring-2 focus:ring-earth" required />
                   </div>
                   <div>
-                    <label className="text-xs font-black uppercase tracking-widest text-stone/40 block mb-2">{activeTab === "food" ? "Price Range" : "Entrance Fee"}</label>
-                    <input name={activeTab === "food" ? "priceRange" : "entranceFee"} defaultValue={activeTab === "food" ? isEditing?.priceRange : isEditing?.entranceFee} className="w-full bg-white border border-clay rounded-2xl p-4 font-bold text-stone outline-none focus:ring-2 focus:ring-earth" required />
+                    <label className="text-xs font-black uppercase tracking-widest text-stone/40 block mb-2">Image/Photo URL</label>
+                    <input name={activeTab === "guides" ? "photoURL" : activeTab === "foodSpots" ? "image" : activeTab === "events" ? "image" : "images"} defaultValue={activeTab === "guides" ? isEditing?.photoURL : activeTab === "foodSpots" ? isEditing?.image : activeTab === "events" ? isEditing?.image : isEditing?.images?.[0]} className="w-full bg-white border border-clay rounded-2xl p-4 font-bold text-stone outline-none focus:ring-2 focus:ring-earth" required />
                   </div>
                 </div>
+
+                {activeTab !== "events" && activeTab !== "guides" && (
+                   <div className="grid grid-cols-1 gap-4">
+                     <div>
+                       <label className="text-xs font-black uppercase tracking-widest text-stone/40 block mb-2">Address</label>
+                       <input name="address" defaultValue={isEditing?.location?.address} className="w-full bg-white border border-clay rounded-2xl p-4 font-bold text-stone outline-none focus:ring-2 focus:ring-earth" required />
+                     </div>
+                   </div>
+                )}
+
+                {activeTab === "events" && (
+                   <div>
+                     <label className="text-xs font-black uppercase tracking-widest text-stone/40 block mb-2">Location Name</label>
+                     <input name="location" defaultValue={isEditing?.location} className="w-full bg-white border border-clay rounded-2xl p-4 font-bold text-stone outline-none focus:ring-2 focus:ring-earth" required />
+                   </div>
+                )}
 
                 <button className="w-full bg-earth text-white py-5 rounded-[2rem] font-bold text-lg hover:bg-earth/90 transition-all shadow-xl shadow-earth/20 flex items-center justify-center gap-3">
                   <Save className="w-6 h-6" />

@@ -1,11 +1,11 @@
 import { Star, ShieldCheck, Calendar, DollarSign, Briefcase, CheckCircle2, Search, Filter, X } from "lucide-react";
 import { LOCAL_BUDDIES } from "../constants";
 import { motion, AnimatePresence } from "motion/react";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { cn } from "../lib/utils";
 import { useFirebase } from "../contexts/FirebaseContext";
 import { db, OperationType, handleFirestoreError } from "../lib/firebase";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, onSnapshot } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 
 export default function Guides() {
@@ -18,16 +18,26 @@ export default function Guides() {
   const [booked, setBooked] = useState(false);
   const navigate = useNavigate();
 
+  const [liveGuides, setLiveGuides] = useState<any[]>(LOCAL_BUDDIES || []);
+
+  useEffect(() => {
+    return onSnapshot(collection(db, "guides"), (snapshot) => {
+      if (!snapshot.empty) {
+        setLiveGuides(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      }
+    });
+  }, []);
+
   const filteredBuddies = useMemo(() => {
-    return (LOCAL_BUDDIES || []).filter(buddy => {
+    return (liveGuides || []).filter(buddy => {
       const matchesSearch = buddy.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
                           buddy.bio.toLowerCase().includes(searchQuery.toLowerCase());
       const years = parseInt(buddy.experience) || 0;
       const matchesExp = years >= minExperience;
-      const matchesPrice = buddy.pricePerDay <= maxPrice;
+      const matchesPrice = (buddy.pricePerDay || 0) <= maxPrice;
       return matchesSearch && matchesExp && matchesPrice;
     });
-  }, [searchQuery, minExperience, maxPrice]);
+  }, [liveGuides, searchQuery, minExperience, maxPrice]);
 
   const handleBook = async () => {
     if (!user) {

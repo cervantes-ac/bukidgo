@@ -1,12 +1,12 @@
 import { Search, MapPin, Star, Navigation, Utensils, X, Compass, Filter, ArrowUpRight, Calendar, CheckCircle2 } from "lucide-react";
 import { DESTINATIONS, FOOD_SPOTS } from "../constants";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { cn } from "../lib/utils";
 import { FoodSpot } from "../types";
 import { useFirebase } from "../contexts/FirebaseContext";
 import { db, OperationType, handleFirestoreError } from "../lib/firebase";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, onSnapshot } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 
 export default function Explore() {
@@ -19,6 +19,23 @@ export default function Explore() {
   const [booked, setBooked] = useState(false);
   const navigate = useNavigate();
 
+  const [liveDestinations, setLiveDestinations] = useState<any[]>(DESTINATIONS || []);
+  const [liveFoodSpots, setLiveFoodSpots] = useState<any[]>(FOOD_SPOTS || []);
+
+  useEffect(() => {
+    const unsubDest = onSnapshot(collection(db, "destinations"), (snapshot) => {
+      if (!snapshot.empty) {
+        setLiveDestinations(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      }
+    });
+    const unsubFood = onSnapshot(collection(db, "foodSpots"), (snapshot) => {
+      if (!snapshot.empty) {
+        setLiveFoodSpots(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      }
+    });
+    return () => { unsubDest(); unsubFood(); };
+  }, []);
+
   const categories = [
     { id: "all", label: "Everything", icon: Compass },
     { id: "nature", label: "Nature", icon: Compass },
@@ -29,8 +46,8 @@ export default function Explore() {
   ];
 
   const combinedItems = [
-    ...(DESTINATIONS || []),
-    ...(FOOD_SPOTS || []).map(f => ({
+    ...(liveDestinations || []),
+    ...(liveFoodSpots || []).map(f => ({
       ...f,
       category: "food" as const,
       images: [f.image],

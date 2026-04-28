@@ -1,11 +1,11 @@
 import { Calendar, MapPin, Ticket, Filter, X, Search, CheckCircle2 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { EVENTS } from "../constants";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { cn } from "../lib/utils";
 import { useFirebase } from "../contexts/FirebaseContext";
 import { db, OperationType, handleFirestoreError } from "../lib/firebase";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, onSnapshot } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 
 export default function Events() {
@@ -16,6 +16,16 @@ export default function Events() {
   const [booked, setBooked] = useState<string | null>(null);
   const navigate = useNavigate();
 
+  const [liveEvents, setLiveEvents] = useState<any[]>(EVENTS || []);
+
+  useEffect(() => {
+    return onSnapshot(collection(db, "events"), (snapshot) => {
+      if (!snapshot.empty) {
+        setLiveEvents(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      }
+    });
+  }, []);
+
   const filters = [
     { id: "all", label: "All Events" },
     { id: "festival", label: "Festivals" },
@@ -24,7 +34,7 @@ export default function Events() {
     { id: "community", label: "Community" }
   ];
 
-  const filteredEvents = EVENTS.filter(e => {
+  const filteredEvents = liveEvents.filter(e => {
     const matchesFilter = activeFilter === "all" || e.category === activeFilter;
     const matchesSearch = e.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
                          e.description.toLowerCase().includes(searchQuery.toLowerCase()) ||

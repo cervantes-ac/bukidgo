@@ -1,12 +1,12 @@
 import { Utensils, Star, MapPin, X, Navigation, Filter, Search, Calendar, CheckCircle2 } from "lucide-react";
 import { FOOD_SPOTS } from "../constants";
 import { motion, AnimatePresence } from "motion/react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FoodSpot } from "../types";
 import { cn } from "../lib/utils";
 import { useFirebase } from "../contexts/FirebaseContext";
 import { db, OperationType, handleFirestoreError } from "../lib/firebase";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, onSnapshot } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 
 export default function Food() {
@@ -18,6 +18,16 @@ export default function Food() {
   const [booked, setBooked] = useState(false);
   const navigate = useNavigate();
 
+  const [liveFoodSpots, setLiveFoodSpots] = useState<FoodSpot[]>(FOOD_SPOTS as FoodSpot[]);
+
+  useEffect(() => {
+    return onSnapshot(collection(db, "foodSpots"), (snapshot) => {
+      if (!snapshot.empty) {
+        setLiveFoodSpots(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FoodSpot)));
+      }
+    });
+  }, []);
+
   const filters = [
     { id: "all", label: "All Spots" },
     { id: "₱", label: "Budget Friendly" },
@@ -25,7 +35,7 @@ export default function Food() {
     { id: "₱₱₱", label: "Premium" }
   ];
 
-  const filteredSpots = FOOD_SPOTS.filter(s => {
+  const filteredSpots = liveFoodSpots.filter(s => {
     const matchesFilter = activeFilter === "all" || s.priceRange === activeFilter || s.priceRange.includes(activeFilter);
     const matchesSearch = s.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
                          s.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
