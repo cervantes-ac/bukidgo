@@ -1,8 +1,6 @@
 import React, { useState } from "react";
 import { auth, db } from "../lib/firebase";
 import { 
-  signInWithPopup, 
-  GoogleAuthProvider, 
   createUserWithEmailAndPassword, 
   signInWithEmailAndPassword,
   sendPasswordResetEmail,
@@ -62,50 +60,6 @@ export default function Auth() {
         return 'Sign-in was cancelled. Please try again.';
       default:
         return error.message || 'An unexpected error occurred. Please try again.';
-    }
-  };
-
-  const handleGoogleSignIn = async () => {
-    setError(null);
-    setSuccess(null);
-    setLoading(true);
-
-    try {
-      const provider = new GoogleAuthProvider();
-      provider.addScope('email');
-      provider.addScope('profile');
-      
-      // Add custom parameters to ensure we get a fresh sign-in
-      provider.setCustomParameters({
-        prompt: 'select_account'
-      });
-
-      const result = await signInWithPopup(auth, provider);
-      const user = result.user;
-
-      // Check if user document exists
-      const userDocRef = doc(db, "users", user.uid);
-      const userDoc = await getDoc(userDocRef);
-
-      // Create or update user document
-      await setDoc(userDocRef, {
-        uid: user.uid,
-        email: user.email,
-        displayName: user.displayName,
-        photoURL: user.photoURL,
-        role: userDoc.exists() ? userDoc.data()?.role || "user" : "user",
-        createdAt: userDoc.exists() ? userDoc.data()?.createdAt : new Date().toISOString(),
-        lastLoginAt: new Date().toISOString(),
-        provider: 'google'
-      }, { merge: true });
-
-      setSuccess('Successfully signed in with Google!');
-      setTimeout(() => navigate("/"), 1000);
-    } catch (error: any) {
-      console.error('Google sign-in error:', error);
-      setError(getAuthErrorMessage(error));
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -227,32 +181,6 @@ export default function Auth() {
           )}
         </AnimatePresence>
 
-        <div className="space-y-4 mb-8">
-          <button 
-            onClick={handleGoogleSignIn}
-            disabled={loading}
-            className="w-full flex items-center justify-center gap-3 bg-linen border border-clay py-4 rounded-2xl font-bold text-stone hover:bg-clay transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? (
-              <div className="w-5 h-5 border-2 border-stone border-t-transparent rounded-full animate-spin" />
-            ) : (
-              <img src="https://www.google.com/favicon.ico" className="w-5 h-5" alt="Google" />
-            )}
-            Continue with Google
-          </button>
-        </div>
-
-        <div className="relative mb-8">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-clay"></div>
-          </div>
-          <div className="relative flex justify-center text-xs">
-            <span className="px-4 bg-white text-stone/30 font-bold uppercase tracking-widest">
-              Or continue with email
-            </span>
-          </div>
-        </div>
-
         <form onSubmit={handleEmailAuth} className="space-y-6">
           <div className="space-y-2">
             <label className="text-[10px] font-bold text-stone/40 uppercase tracking-widest ml-1">
@@ -365,14 +293,6 @@ export default function Auth() {
           </button>
         </p>
 
-        <div className="mt-8 pt-8 border-t border-clay/30 text-center">
-          <button 
-            onClick={() => navigate('/admin')}
-            className="text-[10px] font-black uppercase tracking-[0.3em] text-stone/20 hover:text-earth transition-colors"
-          >
-            Admin Access
-          </button>
-        </div>
       </motion.div>
     </div>
   );

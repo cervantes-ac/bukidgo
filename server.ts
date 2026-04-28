@@ -13,7 +13,7 @@ const __dirname = path.dirname(__filename);
 
 async function startServer() {
   const app = express();
-  const PORT = 3005;
+  const PORT = 3007;
 
   app.use(cors());
   app.use(express.json());

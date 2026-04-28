@@ -15,11 +15,7 @@
   },
   "auth": {
     "providers": {
-      "emailPassword": true,
-      "googleSignIn": {
-        "oAuthBrandDisplayName": "BukidGO",
-        "supportEmail": "aaronclydeccervantes@gmail.com"
-      }
+      "emailPassword": true
     }
   }
 }

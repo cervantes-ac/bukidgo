@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { auth } from "../lib/firebase";
 import { onAuthStateChanged, signOut } from "firebase/auth";
-import { Menu, X, User, MapPin, Sparkles, Utensils, Calendar, LogOut } from "lucide-react";
+import { Menu, X, User, MapPin, Sparkles, Utensils, Calendar, LogOut, Settings } from "lucide-react";
 import { cn } from "../lib/utils";
 import { motion, AnimatePresence } from "motion/react";
 
@@ -55,8 +55,12 @@ export default function Navbar() {
             {isAdmin && (
               <Link
                 to="/admin"
-                className="text-sm font-black tracking-widest text-earth hover:text-earth/80 uppercase border-2 border-earth/20 px-3 py-1 rounded-lg"
+                className={cn(
+                  "text-sm font-bold tracking-wide transition-colors hover:text-earth flex items-center gap-1.5 bg-earth/10 text-earth px-3 py-1.5 rounded-lg border border-earth/20",
+                  location.pathname === "/admin" ? "bg-earth text-white" : ""
+                )}
               >
+                <Settings className="w-4 h-4" />
                 Admin
               </Link>
             )}
@@ -117,10 +121,10 @@ export default function Navbar() {
                 <Link
                   to="/admin"
                   onClick={() => setIsOpen(false)}
-                  className="flex items-center gap-3 text-earth font-black uppercase tracking-widest text-sm"
+                  className="flex items-center gap-3 text-earth font-bold bg-earth/10 px-3 py-2 rounded-lg"
                 >
-                  <MapPin className="w-5 h-5 text-earth" />
-                  Admin Panel
+                  <Settings className="w-5 h-5 text-earth" />
+                  Admin Dashboard
                 </Link>
               )}
               <hr className="border-clay" />
