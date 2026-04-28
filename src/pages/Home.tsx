@@ -394,12 +394,31 @@ export default function Home() {
 
       {/* Local Buddies Preview */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
-        <div className="flex justify-between items-end mb-8">
-          <div>
-            <h2 className="text-3xl font-serif font-bold text-forest">Expert Buddies</h2>
-            <p className="text-stone/60">Professional guides ready to show you around</p>
+        <div className="flex flex-col lg:flex-row gap-12 items-center mb-16">
+          <div className="flex-1 space-y-6">
+            <h2 className="text-5xl font-serif font-bold text-forest leading-tight">Our Local Buddies</h2>
+            <p className="text-stone/60 text-xl leading-relaxed">
+              Don't just visit—experience Bukidnon like a local. Our verified buddies are expert mountaineers, cultural storytellers, and waterfall chasers ready to guide you.
+            </p>
+            <div className="flex items-center gap-4">
+              <Link to="/guides" className="bg-earth text-white px-8 py-4 rounded-2xl font-bold hover:bg-earth/90 transition-all shadow-lg shadow-earth/20 flex items-center gap-2">
+                Meet the Team <ArrowUpRight className="w-5 h-5" />
+              </Link>
+            </div>
           </div>
-          <Link to="/guides" className="text-earth font-bold hover:underline">View All</Link>
+          <div className="flex-1 w-full h-[400px] rounded-[4rem] overflow-hidden shadow-2xl border-4 border-white relative group">
+            <img 
+              src="/img/BukidGO/4.jpg" 
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000"
+              alt="Local Buddies Group"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+            <div className="absolute bottom-8 left-8">
+              <span className="bg-white/20 backdrop-blur-md text-white text-[10px] uppercase font-black tracking-widest px-4 py-2 rounded-full border border-white/30">
+                Official Local Buddies Team
+              </span>
+            </div>
+          </div>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

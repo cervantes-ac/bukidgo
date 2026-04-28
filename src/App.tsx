@@ -5,6 +5,8 @@
 
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import Layout from "./components/Layout";
+import ErrorBoundary from "./components/ErrorBoundary";
+import LoadingSpinner from "./components/LoadingSpinner";
 import Home from "./pages/Home";
 import Explore from "./pages/Explore";
 import ItineraryGenerator from "./pages/ItineraryGenerator";
@@ -21,9 +23,11 @@ function AppRoutes() {
 
   if (loading) {
     return (
-      <div className="h-screen w-full flex items-center justify-center bg-linen">
-        <div className="w-12 h-12 border-4 border-earth border-t-transparent rounded-full animate-spin shadow-xl" />
-      </div>
+      <LoadingSpinner 
+        fullScreen 
+        size="lg" 
+        text="Loading BukidGo..." 
+      />
     );
   }
 
@@ -49,8 +53,10 @@ function AppRoutes() {
 
 export default function App() {
   return (
-    <FirebaseProvider>
-      <AppRoutes />
-    </FirebaseProvider>
+    <ErrorBoundary>
+      <FirebaseProvider>
+        <AppRoutes />
+      </FirebaseProvider>
+    </ErrorBoundary>
   );
 }
