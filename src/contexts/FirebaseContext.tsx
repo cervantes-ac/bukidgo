@@ -51,7 +51,7 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       unsubscribe();
       clearTimeout(timeoutId);
     };
-  }, [loading]);
+  }, []); // Empty dependency array - run once on mount
 
   return (
     <FirebaseContext.Provider value={{ user, isAdmin, loading }}>

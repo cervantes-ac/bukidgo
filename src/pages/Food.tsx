@@ -19,6 +19,7 @@ export default function Food() {
   const navigate = useNavigate();
 
   const [liveFoodSpots, setLiveFoodSpots] = useState<FoodSpot[]>(FOOD_SPOTS as FoodSpot[]);
+  const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
   useEffect(() => {
     return onSnapshot(collection(db, "foodSpots"), (snapshot) => {
@@ -229,7 +230,24 @@ export default function Food() {
                       ))}
                     </div>
 
-                    <div className="flex flex-col gap-4 pt-4 pb-4">
+                    <div className="space-y-4">
+                      <h4 className="text-[10px] uppercase font-black tracking-widest text-stone/30">Location Map</h4>
+                      <div className="w-full h-48 rounded-[2rem] overflow-hidden border border-clay shadow-sm">
+                        {GOOGLE_MAPS_API_KEY ? (
+                          <img 
+                            src={`https://maps.googleapis.com/maps/api/staticmap?center=${selectedFood.location.lat},${selectedFood.location.lng}&zoom=15&size=600x300&maptype=roadmap&markers=color:red%7C${selectedFood.location.lat},${selectedFood.location.lng}&key=${GOOGLE_MAPS_API_KEY}`}
+                            className="w-full h-full object-cover"
+                            alt="Location Map"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-linen flex items-center justify-center text-stone/30 text-xs font-bold">
+                            Map preview unavailable
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col gap-4 pt-6 pb-6">
                       <button 
                         onClick={handleReserve}
                         disabled={isBooking}
