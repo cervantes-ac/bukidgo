@@ -23,7 +23,7 @@ async function startServer() {
     const { prompt } = req.body;
     const apiKey = process.env.GEMINI_API_KEY;
 
-    if (!apiKey || apiKey === "MY_GEMINI_API_KEY") {
+    if (!apiKey || apiKey === "MY_GEMINI_API_KEY" || apiKey === '"MY_GEMINI_API_KEY"') {
       return res.status(400).json({ 
         error: "Gemini API key not configured. Please add GEMINI_API_KEY to your .env file." 
       });

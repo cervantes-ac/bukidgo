@@ -24,6 +24,7 @@ const SHARED_STYLE = `
     color: var(--ink); 
     font-family: 'Outfit', system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
   }
   ::selection { background: #C4622D22; color: #1A1208; }
   ::-webkit-scrollbar { width: 6px; }
@@ -35,6 +36,14 @@ const SHARED_STYLE = `
   .bk-display { font-family: 'Fraunces', Georgia, serif; }
   .bk-mono { font-family: 'JetBrains Mono', monospace; }
   input, textarea, select, button { font-family: 'Outfit', system-ui, sans-serif; }
+  
+  /* Responsive base styles */
+  @media (max-width: 768px) {
+    html { font-size: 14px; }
+  }
+  @media (max-width: 480px) {
+    html { font-size: 13px; }
+  }
 `;
 
 export default function Layout() {
