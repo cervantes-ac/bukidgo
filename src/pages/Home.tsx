@@ -1,12 +1,12 @@
 import { Search, MapPin, Sparkles, TrendingUp, ShieldCheck, Users, Navigation, X, Star, ArrowUpRight, Utensils, Calendar, CheckCircle2 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import { DESTINATIONS, LOCAL_BUDDIES, FOOD_SPOTS } from "../constants";
+import { LOCAL_BUDDIES } from "../constants";
 import { motion, AnimatePresence } from "motion/react";
-import { useState } from "react";
-import { FoodSpot } from "../types";
+import { useState, useEffect } from "react";
+import { FoodSpot, Destination } from "../types";
 import { useFirebase } from "../contexts/FirebaseContext";
 import { db, OperationType, handleFirestoreError } from "../lib/firebase";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, onSnapshot } from "firebase/firestore";
 
 export default function Home() {
   const [selectedFood, setSelectedFood] = useState<FoodSpot | null>(null);
@@ -14,6 +14,24 @@ export default function Home() {
   const [isBooking, setIsBooking] = useState(false);
   const [booked, setBooked] = useState(false);
   const navigate = useNavigate();
+  const [destinations, setDestinations] = useState<Destination[]>([]);
+  const [foodSpots, setFoodSpots] = useState<FoodSpot[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const unsubDest = onSnapshot(collection(db, "destinations"), (snapshot) => {
+      if (!snapshot.empty) {
+        setDestinations(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Destination)));
+      }
+      setLoading(false);
+    });
+    const unsubFood = onSnapshot(collection(db, "foodSpots"), (snapshot) => {
+      if (!snapshot.empty) {
+        setFoodSpots(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FoodSpot)));
+      }
+    });
+    return () => { unsubDest(); unsubFood(); };
+  }, []);
 
   const handleReserve = async () => {
     if (!user) {
@@ -115,7 +133,12 @@ export default function Home() {
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-          {(DESTINATIONS || []).slice(0, 3).map((spot, idx) => (
+          {loading ? (
+            <div className="col-span-3 text-center py-20">
+              <div className="w-10 h-10 border-3 border-earth border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+              <p className="text-stone/40">Loading destinations...</p>
+            </div>
+          ) : destinations.slice(0, 3).map((spot, idx) => (
             <motion.div
               key={spot.id}
               initial={{ opacity: 0, y: 30 }}
@@ -211,7 +234,7 @@ export default function Home() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-          {(FOOD_SPOTS || []).slice(0, 3).map((food, idx) => (
+          {foodSpots.slice(0, 3).map((food, idx) => (
             <motion.div
               key={food.id}
               initial={{ opacity: 0, scale: 0.95 }}
