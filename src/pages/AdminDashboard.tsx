@@ -3,8 +3,29 @@ import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, setDoc } from "
 import { db, OperationType, handleFirestoreError } from "../lib/firebase";
 import { useFirebase } from "../contexts/FirebaseContext";
 import { motion, AnimatePresence } from "motion/react";
-import { Plus, Trash2, Edit2, Save, X, Database, MapPin, BarChart3, Users, Settings, Globe, Coffee, Calendar, Star, DollarSign, Upload, Image, Hash, Type, Text, Map, Tag, Filter, ChevronDown, Search } from "lucide-react";
-import { cn } from "../lib/utils";
+import { Plus, Trash2, Edit2, Save, X, Database, MapPin, BarChart3, Users, Settings, Globe, Coffee, Calendar, Star, DollarSign, Upload, Image, Hash, Type, Text, Map, Tag, Search, ArrowUpRight, Mountain, Filter } from "lucide-react";
+
+const S = `
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;0,9..144,900;1,9..144,300;1,9..144,700&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
+  .bk-display { font-family: 'Fraunces', Georgia, serif; }
+  .bk-mono { font-family: 'JetBrains Mono', monospace; }
+  .tab-btn { transition: all 0.15s; cursor: pointer; }
+  .tab-btn:hover { background: #EDE7DC !important; }
+  .item-row { transition: background 0.1s; }
+  .item-row:hover { background: #FEFCF9 !important; }
+  .item-row:hover .row-actions { opacity: 1 !important; }
+  .row-actions { opacity: 0; transition: opacity 0.15s; }
+  .form-input {
+    width: 100%; background: #F5F0E8; border: 1px solid #DDD6C8;
+    padding: 12px 14px; font-family: 'Outfit', sans-serif; font-size: 14px; color: #1A1208;
+    outline: none; transition: border-color 0.15s; border-radius: 2px;
+  }
+  .form-input::placeholder { color: #B8B0A4; }
+  .form-input:focus { border-color: #C4622D; }
+  .form-label { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: #B8B0A4; letter-spacing: 0.2em; text-transform: uppercase; display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
+  select.form-input option { background: #F5F0E8; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+`;
 
 export default function AdminDashboard() {
   const { user, isAdmin, loading } = useFirebase();
@@ -13,693 +34,407 @@ export default function AdminDashboard() {
   const [isEditing, setIsEditing] = useState<any | null>(null);
   const [isAdding, setIsAdding] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [stats, setStats] = useState({
-    totalItems: 0,
-    averageRating: 0,
-    totalValue: 0
-  });
+  const [stats, setStats] = useState({ totalItems: 0, averageRating: 0, totalValue: 0 });
 
-  useEffect(() => {
-    if (isAdmin) {
-      fetchData();
-    }
-  }, [isAdmin, activeTab]);
-
-  useEffect(() => {
-    calculateStats();
-  }, [items]);
+  useEffect(() => { if (isAdmin) fetchData(); }, [isAdmin, activeTab]);
+  useEffect(() => { calculateStats(); }, [items]);
 
   const fetchData = async () => {
     try {
-      const querySnapshot = await getDocs(collection(db, activeTab));
-      const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setItems(data);
-    } catch (error) {
-      handleFirestoreError(error, OperationType.LIST, activeTab);
-    }
+      const snap = await getDocs(collection(db, activeTab));
+      setItems(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    } catch (e) { handleFirestoreError(e, OperationType.LIST, activeTab); }
   };
 
   const calculateStats = () => {
-    if (items.length === 0) {
-      setStats({ totalItems: 0, averageRating: 0, totalValue: 0 });
-      return;
-    }
-
-    const totalItems = items.length;
-    const averageRating = items.reduce((sum, item) => sum + (item.rating || 0), 0) / totalItems;
-    const totalValue = items.reduce((sum, item) => {
-      if (activeTab === "destinations") return sum + (item.entranceFee || 0);
-      if (activeTab === "foodSpots") return sum + 100; // Base value for food spots
-      if (activeTab === "events") return sum + 50; // Base value for events
-      return sum;
-    }, 0);
-
-    setStats({
-      totalItems,
-      averageRating: parseFloat(averageRating.toFixed(1)),
-      totalValue
-    });
+    if (!items.length) { setStats({ totalItems: 0, averageRating: 0, totalValue: 0 }); return; }
+    const avg = items.reduce((s, i) => s + (i.rating || 0), 0) / items.length;
+    const val = items.reduce((s, i) => s + (activeTab === "destinations" ? (i.entranceFee || 0) : activeTab === "foodSpots" ? 100 : 50), 0);
+    setStats({ totalItems: items.length, averageRating: parseFloat(avg.toFixed(1)), totalValue: val });
   };
 
   const createAdminUser = async () => {
     if (!user) return;
-    
     try {
-      await setDoc(doc(db, "admins", user.uid), {
-        uid: user.uid,
-        email: user.email,
-        role: "admin",
-        createdAt: new Date().toISOString()
-      });
-      alert("Admin access granted! Please refresh the page.");
-      window.location.reload();
-    } catch (error) {
-      console.error("Error creating admin:", error);
-      alert("Error creating admin access. Please try again.");
-    }
+      await setDoc(doc(db, "admins", user.uid), { uid: user.uid, email: user.email, role: "admin", createdAt: new Date().toISOString() });
+      alert("Admin access granted! Please refresh."); window.location.reload();
+    } catch (e) { console.error(e); alert("Error. Please try again."); }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this item? This action cannot be undone.")) return;
+    if (!confirm("Delete this item?")) return;
     try {
       await deleteDoc(doc(db, activeTab, id));
-      setItems(items.filter(item => item.id !== id));
-    } catch (error) {
-      handleFirestoreError(error, OperationType.DELETE, `${activeTab}/${id}`);
-    }
+      setItems(items.filter(i => i.id !== id));
+    } catch (e) { handleFirestoreError(e, OperationType.DELETE, `${activeTab}/${id}`); }
   };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    const formData = new FormData(e.target as HTMLFormElement);
-    const data = Object.fromEntries(formData.entries());
-    
-    // Basic processing
-    const refinedData: any = { ...data };
+    const fd = new FormData(e.target as HTMLFormElement);
+    const data = Object.fromEntries(fd.entries());
+    const refined: any = { ...data };
     if (activeTab === "destinations") {
-        refinedData.rating = parseFloat(data.rating as string);
-        refinedData.entranceFee = parseFloat(data.entranceFee as string);
-        refinedData.images = [data.images as string];
-        refinedData.location = {
-            address: data.address as string,
-            lat: parseFloat(data.lat as string) || 0,
-            lng: parseFloat(data.lng as string) || 0
-        };
+      refined.rating = parseFloat(data.rating as string);
+      refined.entranceFee = parseFloat(data.entranceFee as string);
+      refined.images = [data.images as string];
+      refined.location = { address: data.address as string, lat: parseFloat(data.lat as string) || 0, lng: parseFloat(data.lng as string) || 0 };
     } else if (activeTab === "foodSpots") {
-        refinedData.rating = parseFloat(data.rating as string);
-        refinedData.image = data.image as string;
-        refinedData.location = {
-            address: data.address as string,
-            lat: parseFloat(data.lat as string) || 0,
-            lng: parseFloat(data.lng as string) || 0
-        };
-        // Handle menu items
-        if (data.menu) {
-          refinedData.menu = JSON.parse(data.menu as string);
-        }
+      refined.rating = parseFloat(data.rating as string);
+      refined.image = data.image as string;
+      refined.location = { address: data.address as string, lat: parseFloat(data.lat as string) || 0, lng: parseFloat(data.lng as string) || 0 };
+      if (data.menu) refined.menu = JSON.parse(data.menu as string);
     } else if (activeTab === "events") {
-        refinedData.rating = parseFloat(data.rating as string) || 4.5;
-        refinedData.image = data.image as string;
-        refinedData.month = data.date as string;
+      refined.rating = parseFloat(data.rating as string) || 4.5;
+      refined.image = data.image as string;
+      refined.month = data.date as string;
     } else if (activeTab === "guides") {
-        refinedData.rating = parseFloat(data.rating as string) || 4.5;
-        refinedData.pricePerDay = parseFloat(data.pricePerDay as string) || 0;
-        refinedData.experience = data.experience as string;
-        if (data.specialties) {
-          // Handle multi-select specialties
-          const specialtiesArray = Array.isArray(data.specialties) 
-            ? data.specialties 
-            : [data.specialties];
-          refinedData.specialties = specialtiesArray;
-        }
-    }
-
-    try {
-      if (isEditing) {
-        await updateDoc(doc(db, activeTab, isEditing.id), refinedData);
-      } else {
-        await addDoc(collection(db, activeTab), refinedData);
+      refined.rating = parseFloat(data.rating as string) || 4.5;
+      refined.pricePerDay = parseFloat(data.pricePerDay as string) || 0;
+      refined.experience = data.experience as string;
+      if (data.specialties) {
+        const arr = Array.isArray(data.specialties) ? data.specialties : [data.specialties];
+        refined.specialties = arr;
       }
-      setIsEditing(null);
-      setIsAdding(false);
-      fetchData();
-    } catch (error) {
-      handleFirestoreError(error, OperationType.WRITE, activeTab);
     }
+    try {
+      if (isEditing) { await updateDoc(doc(db, activeTab, isEditing.id), refined); }
+      else { await addDoc(collection(db, activeTab), refined); }
+      setIsEditing(null); setIsAdding(false); fetchData();
+    } catch (e) { handleFirestoreError(e, OperationType.WRITE, activeTab); }
   };
 
-  const filteredItems = items.filter(item => 
-    item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (item.description && item.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
-    (item.location?.address && item.location.address.toLowerCase().includes(searchQuery.toLowerCase()))
+  const filtered = items.filter(i =>
+    i.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    i.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    i.location?.address?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   if (loading) return null;
+
   if (!isAdmin) {
     return (
-      <div className="max-w-7xl mx-auto px-4 py-32 text-center">
-        <div className="relative rounded-[4rem] overflow-hidden p-16 bg-gradient-to-br from-forest/90 to-earth/90 mb-12">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full blur-[120px] -mr-48 -mt-48" />
-          <div className="relative z-10">
-            <div className="w-24 h-24 bg-white/20 rounded-3xl flex items-center justify-center mx-auto mb-8">
-              <Database className="w-12 h-12 text-white" />
+      <>
+        <style>{S}</style>
+        <div style={{ minHeight: "100vh", background: "#F5F0E8", fontFamily: "'Outfit', sans-serif", display: "flex", alignItems: "center", justifyContent: "center", padding: "48px 24px" }}>
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} style={{ maxWidth: 480, width: "100%", textAlign: "center" }}>
+            <div style={{ background: "#1A1208", padding: "64px 48px", marginBottom: 24 }}>
+              <div style={{ width: 72, height: 72, background: "rgba(212,168,83,0.1)", border: "1px solid rgba(212,168,83,0.2)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 24px" }}>
+                <Database style={{ width: 32, height: 32, color: "#D4A853" }} />
+              </div>
+              <h1 className="bk-display" style={{ fontSize: 40, fontWeight: 900, color: "#F5F0E8", marginBottom: 10 }}>Admin Portal</h1>
+              <p style={{ fontSize: 14, color: "rgba(245,240,232,0.35)", fontWeight: 300, lineHeight: 1.7 }}>
+                Access the administrative dashboard to manage all Bukidnon content.
+              </p>
             </div>
-            <h1 className="text-5xl font-serif font-bold text-white mb-6">Admin Portal</h1>
-            <p className="text-white/60 text-xl max-w-2xl mx-auto mb-12">
-              Access the administrative dashboard to manage all Bukidnon experiences, guides, and content.
-            </p>
-          </div>
+            <div style={{ background: "#fff", border: "1px solid #DDD6C8", padding: "40px 32px" }}>
+              <h2 className="bk-display" style={{ fontSize: 26, fontWeight: 700, color: "#1A1208", marginBottom: 8 }}>Access Required</h2>
+              <p style={{ fontSize: 13, color: "#B8B0A4", marginBottom: 28, fontWeight: 300 }}>You need administrative privileges to proceed.</p>
+              <button onClick={createAdminUser}
+                style={{ width: "100%", padding: "16px", background: "#C4622D", color: "#F5F0E8", border: "none", fontSize: 14, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, borderRadius: 2 }}>
+                <Database style={{ width: 16, height: 16 }} /> Grant Admin Access
+              </button>
+              <p className="bk-mono" style={{ fontSize: 10, color: "#DDD6C8", marginTop: 16, letterSpacing: "0.1em" }}>Requires admin@gmail.com</p>
+            </div>
+          </motion.div>
         </div>
-        
-        <div className="max-w-md mx-auto bg-white rounded-[3rem] p-12 border border-clay shadow-2xl">
-          <h2 className="text-3xl font-serif font-bold text-forest mb-4">Access Required</h2>
-          <p className="text-stone/60 mb-8">You need administrative privileges to access this dashboard.</p>
-          <button 
-            onClick={createAdminUser}
-            className="w-full bg-gradient-to-r from-forest to-earth text-white px-8 py-5 rounded-2xl font-bold flex items-center justify-center gap-3 hover:opacity-90 transition-all shadow-xl shadow-forest/20"
-          >
-            <Database className="w-6 h-6" />
-            Grant Admin Access
-          </button>
-          <p className="text-stone/40 text-sm mt-6">
-            Note: You must be signed in as <span className="font-bold">admin@gmail.com</span>
-          </p>
-        </div>
-      </div>
+      </>
     );
   }
 
-  const tabConfig = {
-    destinations: { icon: Globe, label: "Destinations", color: "from-blue-500/20 to-cyan-500/20", text: "text-blue-600" },
-    foodSpots: { icon: Coffee, label: "Food Spots", color: "from-amber-500/20 to-orange-500/20", text: "text-amber-600" },
-    events: { icon: Calendar, label: "Events", color: "from-purple-500/20 to-pink-500/20", text: "text-purple-600" },
-    guides: { icon: Users, label: "Guides", color: "from-emerald-500/20 to-green-500/20", text: "text-emerald-600" }
+  const tabs = {
+    destinations: { icon: Globe, label: "Destinations", accent: "#0ea5e9" },
+    foodSpots: { icon: Coffee, label: "Food Spots", accent: "#f59e0b" },
+    events: { icon: Calendar, label: "Events", accent: "#8b5cf6" },
+    guides: { icon: Users, label: "Guides", accent: "#10b981" },
   };
+  const tab = tabs[activeTab];
 
-  const currentTab = tabConfig[activeTab];
-
-  // Dropdown options
-  const categoryOptions = {
-    destinations: ["Nature", "Adventure", "Cultural", "Viewpoint", "Waterfall", "Mountain"],
-    foodSpots: ["Local Delicacies", "Filipino", "International", "Vegetarian", "Seafood", "Meat", "Coffee & Desserts", "Street Food"],
-    events: ["Festival", "Cultural", "Sports", "Community", "Music", "Art", "Food Fair", "Religious"],
-    guides: ["Beginner", "Intermediate", "Expert", "Professional"]
-  };
-
+  const categoryOptions = { destinations: ["Nature", "Adventure", "Cultural", "Viewpoint", "Waterfall", "Mountain"], foodSpots: ["Local Delicacies", "Filipino", "International", "Vegetarian", "Seafood", "Coffee & Desserts", "Street Food"], events: ["Festival", "Cultural", "Sports", "Community", "Music", "Food Fair", "Religious"], guides: ["Beginner", "Intermediate", "Expert", "Professional"] };
   const priceRangeOptions = ["₱", "₱₱", "₱₱₱"];
   const experienceOptions = ["1-2 years", "3-5 years", "5-10 years", "10+ years"];
   const specialtiesOptions = ["Hiking", "Food Tours", "Photography", "History", "Nature", "Adventure", "Cultural", "Transportation"];
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      {/* Hero Header */}
-      <div className="relative rounded-[4rem] overflow-hidden mb-16 bg-gradient-to-br from-forest/90 to-earth/90 p-12">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full blur-[120px] -mr-48 -mt-48" />
-        <div className="relative z-10">
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center">
-                  <Settings className="w-8 h-8 text-white" />
+    <>
+      <style>{S}</style>
+      <div style={{ fontFamily: "'Outfit', sans-serif", background: "#F5F0E8", color: "#1A1208", minHeight: "100vh" }}>
+
+        {/* Header */}
+        <div style={{ background: "#1A1208", padding: "56px 2rem 48px" }}>
+          <div style={{ maxWidth: 1280, margin: "0 auto" }}>
+            <div className="bk-mono" style={{ fontSize: 10, color: "#D4A853", letterSpacing: "0.35em", textTransform: "uppercase", marginBottom: 14, display: "flex", alignItems: "center", gap: 10 }}>
+              <Settings style={{ width: 12, height: 12 }} />
+              Admin Dashboard · BukidGo
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: 24 }}>
+              <div>
+                <h1 className="bk-display" style={{ fontSize: "clamp(2rem,5vw,4rem)", fontWeight: 900, color: "#F5F0E8", lineHeight: 0.95, marginBottom: 10 }}>
+                  Content<br /><em style={{ color: "#D4A853" }}>Management</em>
+                </h1>
+                <p style={{ fontSize: 14, color: "rgba(245,240,232,0.35)", fontWeight: 300 }}>
+                  Manage destinations, food spots, events, and guides.
+                </p>
+              </div>
+              <div style={{ background: "rgba(245,240,232,0.05)", border: "1px solid rgba(245,240,232,0.08)", padding: "16px 20px" }}>
+                <div className="bk-mono" style={{ fontSize: 9, color: "rgba(245,240,232,0.3)", letterSpacing: "0.2em", textTransform: "uppercase", marginBottom: 4 }}>Signed in as</div>
+                <div style={{ fontSize: 14, color: "#F5F0E8", fontWeight: 500 }}>{user?.email}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Stats */}
+        <div style={{ maxWidth: 1280, margin: "0 auto", padding: "32px 2rem 0" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 2 }}>
+            {[
+              { label: "Total Items", value: stats.totalItems, icon: Hash, color: "#0ea5e9" },
+              { label: "Avg Rating", value: stats.averageRating, icon: Star, color: "#D4A853" },
+              { label: "Total Value", value: `₱${stats.totalValue}`, icon: BarChart3, color: "#4A7C59" },
+            ].map(({ label, value, icon: Icon, color }) => (
+              <div key={label} style={{ background: "#fff", border: "1px solid #DDD6C8", padding: "24px 28px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
+                  <div style={{ width: 36, height: 36, background: `${color}15`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <Icon style={{ width: 18, height: 18, color }} />
+                  </div>
+                  <div className="bk-mono" style={{ fontSize: 9, color: "#B8B0A4", letterSpacing: "0.2em", textTransform: "uppercase" }}>{label}</div>
                 </div>
-                <span className="text-white/80 font-black uppercase tracking-[0.3em] text-sm">Admin Dashboard</span>
+                <div className="bk-display" style={{ fontSize: 36, fontWeight: 900, color: "#1A1208" }}>{value}</div>
+                <div className="bk-mono" style={{ fontSize: 9, color: "#B8B0A4", marginTop: 4 }}>in {tab.label}</div>
               </div>
-              <h1 className="text-6xl font-serif font-bold text-white mb-4 leading-tight">
-                Content Management <br />
-                <span className="text-linen">Hub</span>
-              </h1>
-              <p className="text-white/60 text-xl max-w-2xl">
-                Manage destinations, food spots, events, and local guides across Bukidnon.
-              </p>
-            </div>
-            <div className="hidden lg:block">
-              <div className="bg-white/10 backdrop-blur-md rounded-3xl p-6 border border-white/20">
-                <p className="text-white/80 text-sm font-bold mb-2">Logged in as</p>
-                <p className="text-white text-xl font-serif">{user?.email}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Stats Dashboard */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-        <div className="bg-white rounded-[3rem] p-8 border border-clay shadow-lg">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="w-14 h-14 bg-gradient-to-br from-blue-500/10 to-cyan-500/10 rounded-2xl flex items-center justify-center">
-              <Hash className="w-7 h-7 text-blue-600" />
-            </div>
-            <div>
-              <p className="text-xs font-black uppercase tracking-widest text-stone/30">Total Items</p>
-              <p className="text-4xl font-serif font-bold text-stone">{stats.totalItems}</p>
-            </div>
-          </div>
-          <p className="text-stone/40 text-sm">in {currentTab.label}</p>
-        </div>
-
-        <div className="bg-white rounded-[3rem] p-8 border border-clay shadow-lg">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="w-14 h-14 bg-gradient-to-br from-amber-500/10 to-orange-500/10 rounded-2xl flex items-center justify-center">
-              <Star className="w-7 h-7 text-amber-600" />
-            </div>
-            <div>
-              <p className="text-xs font-black uppercase tracking-widest text-stone/30">Avg Rating</p>
-              <p className="text-4xl font-serif font-bold text-stone">{stats.averageRating}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-1">
-            {[...Array(5)].map((_, i) => (
-              <Star key={i} className={`w-4 h-4 ${i < Math.floor(stats.averageRating) ? 'fill-yellow-500 text-yellow-500' : 'text-stone/20'}`} />
             ))}
           </div>
         </div>
 
-        <div className="bg-white rounded-[3rem] p-8 border border-clay shadow-lg">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="w-14 h-14 bg-gradient-to-br from-emerald-500/10 to-green-500/10 rounded-2xl flex items-center justify-center">
-              <BarChart3 className="w-7 h-7 text-emerald-600" />
-            </div>
-            <div>
-              <p className="text-xs font-black uppercase tracking-widest text-stone/30">Total Value</p>
-              <p className="text-4xl font-serif font-bold text-stone">₱{stats.totalValue}</p>
-            </div>
-          </div>
-          <p className="text-stone/40 text-sm">Estimated platform value</p>
-        </div>
-      </div>
+        {/* Main */}
+        <div style={{ maxWidth: 1280, margin: "0 auto", padding: "24px 2rem 80px" }}>
+          <div style={{ background: "#fff", border: "1px solid #DDD6C8" }}>
 
-      {/* Main Content */}
-      <div className="bg-white rounded-[4rem] border border-clay shadow-2xl overflow-hidden">
-        {/* Tab Navigation */}
-        <div className="border-b border-clay/30">
-          <div className="flex flex-wrap gap-2 p-8">
-            {(Object.entries(tabConfig) as [keyof typeof tabConfig, any][]).map(([tabKey, config]) => {
-              const Icon = config.icon;
-              return (
-                <button
-                  key={tabKey}
-                  onClick={() => setActiveTab(tabKey)}
-                  className={cn(
-                    "flex items-center gap-3 px-8 py-4 rounded-2xl font-bold text-lg transition-all",
-                    activeTab === tabKey 
-                      ? `bg-gradient-to-r ${config.color} text-stone shadow-lg` 
-                      : "text-stone/50 hover:text-stone hover:bg-linen"
-                  )}
-                >
-                  <Icon className="w-5 h-5" />
-                  {config.label}
-                  {activeTab === tabKey && (
-                    <div className="w-2 h-2 rounded-full bg-current animate-pulse" />
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        </div>
+            {/* Tabs */}
+            <div style={{ display: "flex", borderBottom: "1px solid #DDD6C8", padding: "16px 16px 0" }}>
+              {(Object.entries(tabs) as [keyof typeof tabs, any][]).map(([key, cfg]) => {
+                const Icon = cfg.icon;
+                return (
+                  <button key={key} onClick={() => setActiveTab(key)} className="tab-btn"
+                    style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 16px", background: "transparent", border: "none", borderBottom: activeTab === key ? `2px solid ${cfg.accent}` : "2px solid transparent", marginBottom: -1, fontSize: 13, fontWeight: 600, color: activeTab === key ? "#1A1208" : "#B8B0A4", cursor: "pointer" }}>
+                    <Icon style={{ width: 15, height: 15, color: activeTab === key ? cfg.accent : "inherit" }} />
+                    {cfg.label}
+                  </button>
+                );
+              })}
+            </div>
 
-        {/* Toolbar */}
-        <div className="p-8 border-b border-clay/30">
-          <div className="flex flex-col lg:flex-row gap-6 items-start lg:items-center justify-between">
-            <div className="flex-1">
-              <div className="relative group max-w-xl">
-                <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-stone/40 group-focus-within:text-earth transition-colors" />
-                <input 
-                  type="text"
-                  placeholder={`Search ${currentTab.label.toLowerCase()}...`}
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-14 pr-6 py-5 bg-linen border border-clay rounded-[2rem] focus:ring-2 focus:ring-earth outline-none transition-all font-medium text-stone placeholder:text-stone/30"
-                />
+            {/* Toolbar */}
+            <div style={{ padding: "20px 24px", borderBottom: "1px solid #EDE7DC", display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+              <div style={{ flex: 1, minWidth: 200, position: "relative" }}>
+                <Search style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", width: 14, height: 14, color: "#B8B0A4" }} />
+                <input type="text" placeholder={`Search ${tab.label.toLowerCase()}…`} value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)} className="form-input"
+                  style={{ paddingLeft: 36, paddingTop: 10, paddingBottom: 10 }} />
               </div>
-            </div>
-            
-            <div className="flex gap-4">
-              <button 
-                onClick={() => setIsAdding(true)}
-                className="bg-gradient-to-r from-forest to-earth text-white px-8 py-5 rounded-2xl font-bold flex items-center gap-3 hover:opacity-90 transition-all shadow-xl shadow-forest/20"
-              >
-                <Plus className="w-6 h-6" />
-                Add New {currentTab.label.slice(0, -1)}
+              <button onClick={() => setIsAdding(true)}
+                style={{ display: "flex", alignItems: "center", gap: 6, padding: "10px 20px", background: "#C4622D", color: "#F5F0E8", border: "none", fontSize: 13, fontWeight: 700, cursor: "pointer", borderRadius: 2, whiteSpace: "nowrap" }}>
+                <Plus style={{ width: 15, height: 15 }} /> Add {tab.label.slice(0, -1)}
               </button>
             </div>
-          </div>
-        </div>
 
-        {/* Content Area */}
-        <div className="p-8">
-          {filteredItems.length === 0 ? (
-            <div className="py-20 text-center">
-              <div className="w-32 h-32 bg-linen rounded-full flex items-center justify-center mx-auto mb-8">
-                <Filter className="w-16 h-16 text-stone/20" />
-              </div>
-              <h3 className="text-2xl font-serif font-bold text-stone mb-4">No {currentTab.label} Found</h3>
-              <p className="text-stone/40 mb-8 max-w-md mx-auto">
-                {searchQuery ? "Try a different search term or " : ""}
-                Add your first {currentTab.label.slice(0, -1).toLowerCase()} to get started.
-              </p>
-              {searchQuery && (
-                <button 
-                  onClick={() => setSearchQuery("")}
-                  className="text-earth font-black uppercase tracking-widest text-sm hover:underline flex items-center gap-2 mx-auto"
-                >
-                  <X className="w-4 h-4" />
-                  Clear Search
-                </button>
+            {/* Items */}
+            <div style={{ minHeight: 300 }}>
+              {filtered.length === 0 ? (
+                <div style={{ padding: "80px 24px", textAlign: "center" }}>
+                  <div style={{ width: 64, height: 64, background: "#F5F0E8", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
+                    <Filter style={{ width: 28, height: 28, color: "#DDD6C8" }} />
+                  </div>
+                  <h3 className="bk-display" style={{ fontSize: 24, color: "#DDD6C8", marginBottom: 6 }}>No {tab.label} Found</h3>
+                  <p style={{ fontSize: 13, color: "#B8B0A4" }}>
+                    {searchQuery ? "Try a different search term." : `Add your first ${tab.label.slice(0, -1).toLowerCase()} to get started.`}
+                  </p>
+                  {searchQuery && (
+                    <button onClick={() => setSearchQuery("")}
+                      style={{ marginTop: 16, display: "inline-flex", alignItems: "center", gap: 4, fontSize: 12, color: "#C4622D", background: "none", border: "none", cursor: "pointer" }}>
+                      <X style={{ width: 12, height: 12 }} /> Clear Search
+                    </button>
+                  )}
+                </div>
+              ) : (
+                filtered.map((item) => (
+                  <motion.div key={item.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                    className="item-row"
+                    style={{ display: "grid", gridTemplateColumns: "auto 1fr auto", gap: 20, alignItems: "center", padding: "20px 24px", borderBottom: "1px solid #F5F0E8", background: "#fff" }}>
+                    {/* Image */}
+                    <div style={{ width: 56, height: 56, overflow: "hidden", flexShrink: 0, border: "1px solid #DDD6C8" }}>
+                      <img src={item.images?.[0] || item.image || item.photoURL || ""}
+                        style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="" />
+                    </div>
+                    {/* Info */}
+                    <div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4, flexWrap: "wrap" }}>
+                        <h3 className="bk-display" style={{ fontSize: 19, fontWeight: 700, color: "#1A1208" }}>{item.name}</h3>
+                        {item.category && (
+                          <span className="bk-mono" style={{ fontSize: 9, color: "#C4622D", background: "rgba(196,98,45,0.08)", padding: "2px 8px", border: "1px solid rgba(196,98,45,0.15)" }}>
+                            {item.category}
+                          </span>
+                        )}
+                      </div>
+                      <p style={{ fontSize: 12, color: "#B8B0A4", display: "flex", alignItems: "center", gap: 4, marginBottom: 6 }}>
+                        <MapPin style={{ width: 11, height: 11 }} />
+                        {item.location?.address || item.location || item.description?.substring(0, 80) + "…"}
+                      </p>
+                      <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
+                        {item.rating && (
+                          <span style={{ fontSize: 12, display: "flex", alignItems: "center", gap: 3, color: "#1A1208" }}>
+                            <Star style={{ width: 11, height: 11, fill: "#D4A853", color: "#D4A853" }} />
+                            <strong>{item.rating}</strong>
+                          </span>
+                        )}
+                        {item.priceRange && <span style={{ fontSize: 12, color: "#7A6E61" }}>{item.priceRange}</span>}
+                        {item.entranceFee && <span style={{ fontSize: 12, color: "#7A6E61" }}>₱{item.entranceFee} entrance</span>}
+                        {item.pricePerDay && <span style={{ fontSize: 12, color: "#7A6E61" }}>₱{item.pricePerDay}/day</span>}
+                      </div>
+                    </div>
+                    {/* Actions */}
+                    <div className="row-actions" style={{ display: "flex", gap: 8 }}>
+                      <button onClick={() => setIsEditing(item)}
+                        style={{ padding: "8px 14px", background: "rgba(14,165,233,0.06)", border: "1px solid rgba(14,165,233,0.15)", color: "#0ea5e9", fontSize: 12, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: 4, borderRadius: 2 }}>
+                        <Edit2 style={{ width: 13, height: 13 }} /> Edit
+                      </button>
+                      <button onClick={() => handleDelete(item.id)}
+                        style={{ padding: "8px 14px", background: "rgba(196,98,45,0.06)", border: "1px solid rgba(196,98,45,0.15)", color: "#C4622D", fontSize: 12, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: 4, borderRadius: 2 }}>
+                        <Trash2 style={{ width: 13, height: 13 }} /> Delete
+                      </button>
+                    </div>
+                  </motion.div>
+                ))
               )}
             </div>
-          ) : (
-            <div className="grid gap-6">
-              {filteredItems.map((item) => (
-                <motion.div 
-                  key={item.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="bg-white p-8 rounded-[3rem] border-2 border-clay flex items-center justify-between group hover:shadow-2xl transition-all"
-                >
-                  <div className="flex items-center gap-8">
-                    <div className="relative">
-                      <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-linen to-white overflow-hidden shadow-xl">
-                        <img src={item.images?.[0] || item.image || item.photoURL} className="w-full h-full object-cover" alt="" />
-                      </div>
-                      <div className="absolute -bottom-2 -right-2 bg-earth text-white p-2 rounded-full border-4 border-white shadow-lg">
-                        <currentTab.icon className="w-4 h-4" />
-                      </div>
+          </div>
+        </div>
+
+        {/* Modal */}
+        <AnimatePresence>
+          {(isAdding || isEditing) && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              style={{ position: "fixed", inset: 0, zIndex: 50, background: "rgba(26,18,8,0.75)", backdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}
+              onClick={() => { setIsAdding(false); setIsEditing(null); }}>
+              <motion.div initial={{ scale: 0.97, opacity: 0, y: 16 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.97, opacity: 0 }}
+                style={{ background: "#F5F0E8", width: "100%", maxWidth: 740, maxHeight: "90vh", overflowY: "auto", border: "1px solid #DDD6C8", position: "relative" }}
+                onClick={e => e.stopPropagation()}>
+
+                {/* Modal header */}
+                <div style={{ background: "#1A1208", padding: "32px 40px", display: "flex", justifyContent: "space-between", alignItems: "flex-end", position: "sticky", top: 0, zIndex: 10 }}>
+                  <div>
+                    <div className="bk-mono" style={{ fontSize: 9, color: "rgba(245,240,232,0.3)", letterSpacing: "0.2em", textTransform: "uppercase", marginBottom: 6 }}>
+                      {isEditing ? "Editing" : "New"} Entry
+                    </div>
+                    <h2 className="bk-display" style={{ fontSize: 32, fontWeight: 900, color: "#F5F0E8" }}>
+                      {isEditing ? "Edit" : "Add"} {tab.label.slice(0, -1)}
+                    </h2>
+                  </div>
+                  <button onClick={() => { setIsAdding(false); setIsEditing(null); }}
+                    style={{ background: "rgba(245,240,232,0.06)", border: "1px solid rgba(245,240,232,0.08)", padding: 10, cursor: "pointer", color: "#F5F0E8", display: "flex", borderRadius: 2 }}>
+                    <X style={{ width: 18, height: 18 }} />
+                  </button>
+                </div>
+
+                <form onSubmit={handleSave} style={{ padding: "36px 40px", display: "flex", flexDirection: "column", gap: 20 }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                    <div>
+                      <label className="form-label"><Type style={{ width: 11, height: 11 }} /> Name</label>
+                      <input name="name" defaultValue={isEditing?.name} className="form-input" required placeholder="Enter name" />
                     </div>
                     <div>
-                      <h3 className="text-2xl font-serif font-bold text-stone mb-2">{item.name}</h3>
-                      <p className="text-stone/40 text-sm flex items-center gap-2 mb-4">
-                        <MapPin className="w-3 h-3" />
-                        {item.location?.address || item.location || item.description?.substring(0, 80) + "..."}
-                      </p>
-                      <div className="flex items-center gap-6">
-                        <div className="flex items-center gap-2">
-                          <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                          <span className="text-sm font-bold text-stone">{item.rating}</span>
-                        </div>
-                        {item.priceRange && (
-                          <div className="flex items-center gap-2">
-                            <DollarSign className="w-4 h-4 text-emerald-600" />
-                            <span className="text-sm font-bold text-stone">{item.priceRange}</span>
-                          </div>
-                        )}
-                        {item.entranceFee && (
-                          <div className="flex items-center gap-2">
-                            <Tag className="w-4 h-4 text-blue-600" />
-                            <span className="text-sm font-bold text-stone">₱{item.entranceFee}</span>
-                          </div>
-                        )}
-                        {item.experience && (
-                          <div className="flex items-center gap-2">
-                            <Users className="w-4 h-4 text-purple-600" />
-                            <span className="text-sm font-bold text-stone">{item.experience}</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex gap-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button 
-                      onClick={() => setIsEditing(item)}
-                      className="p-4 bg-gradient-to-r from-blue-500/10 to-cyan-500/10 text-blue-600 rounded-2xl border border-blue-500/20 hover:bg-blue-500/20 transition-all shadow-sm"
-                    >
-                      <Edit2 className="w-5 h-5" />
-                    </button>
-                    <button 
-                      onClick={() => handleDelete(item.id)}
-                      className="p-4 bg-gradient-to-r from-red-500/10 to-pink-500/10 text-red-600 rounded-2xl border border-red-500/20 hover:bg-red-500/20 transition-all shadow-sm"
-                    >
-                      <Trash2 className="w-5 h-5" />
-                    </button>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Add/Edit Modal */}
-      <AnimatePresence>
-        {(isAdding || isEditing) && (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-forest/60 backdrop-blur-md"
-            onClick={() => { setIsAdding(false); setIsEditing(null); }}
-          >
-            <motion.div 
-              initial={{ scale: 0.9, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              className="bg-linen w-full max-w-4xl rounded-[4rem] p-12 border border-clay shadow-2xl relative max-h-[90vh] overflow-y-auto"
-              onClick={e => e.stopPropagation()}
-            >
-              <button 
-                onClick={() => { setIsAdding(false); setIsEditing(null); }}
-                className="absolute top-10 right-10 p-4 bg-white/50 backdrop-blur-md rounded-full text-stone hover:bg-white transition-all shadow-lg"
-              >
-                <X className="w-6 h-6" />
-              </button>
-
-              <div className="mb-10">
-                <h2 className="text-5xl font-serif font-bold text-forest mb-4">
-                  {isEditing ? "Edit" : "Add New"} {currentTab.label.slice(0, -1)}
-                </h2>
-                <p className="text-stone/60 text-lg">
-                  Fill in the details below to {isEditing ? "update" : "create"} this {currentTab.label.slice(0, -1).toLowerCase()}.
-                </p>
-              </div>
-
-              <form onSubmit={handleSave} className="space-y-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Name */}
-                  <div className="space-y-3">
-                    <label className="text-xs font-black uppercase tracking-widest text-stone/30 flex items-center gap-2">
-                      <Type className="w-4 h-4" /> Name
-                    </label>
-                    <input 
-                      name="name" 
-                      defaultValue={isEditing?.name} 
-                      className="w-full bg-white border border-clay rounded-2xl p-5 font-bold text-stone outline-none focus:ring-2 focus:ring-earth" 
-                      required 
-                      placeholder="Enter name"
-                    />
-                  </div>
-                  
-                  {/* Category */}
-                  <div className="space-y-3">
-                    <label className="text-xs font-black uppercase tracking-widest text-stone/30 flex items-center gap-2">
-                      <Tag className="w-4 h-4" /> Category
-                    </label>
-                    <select 
-                      name="category" 
-                      defaultValue={isEditing?.category} 
-                      className="w-full bg-white border border-clay rounded-2xl p-5 font-bold text-stone outline-none focus:ring-2 focus:ring-earth" 
-                      required
-                    >
-                      <option value="">Select a category</option>
-                      {categoryOptions[activeTab].map(option => (
-                        <option key={option} value={option}>{option}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                {/* Description */}
-                <div className="space-y-3">
-                  <label className="text-xs font-black uppercase tracking-widest text-stone/30 flex items-center gap-2">
-                    <Text className="w-4 h-4" /> Description
-                  </label>
-                  <textarea 
-                    name="description" 
-                    defaultValue={isEditing?.description} 
-                    className="w-full bg-white border border-clay rounded-2xl p-5 font-medium text-stone min-h-[120px] outline-none focus:ring-2 focus:ring-earth" 
-                    required 
-                    placeholder="Enter detailed description"
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Rating */}
-                  <div className="space-y-3">
-                    <label className="text-xs font-black uppercase tracking-widest text-stone/30 flex items-center gap-2">
-                      <Star className="w-4 h-4" /> Rating (1-5)
-                    </label>
-                    <input 
-                      name="rating" 
-                      type="number" 
-                      step="0.1" 
-                      min="1" 
-                      max="5" 
-                      defaultValue={isEditing?.rating || 4.5} 
-                      className="w-full bg-white border border-clay rounded-2xl p-5 font-bold text-stone outline-none focus:ring-2 focus:ring-earth" 
-                      required 
-                    />
-                  </div>
-                  
-                  {/* Price/Entrance Fee/Date */}
-                  <div className="space-y-3">
-                    <label className="text-xs font-black uppercase tracking-widest text-stone/30 flex items-center gap-2">
-                      {activeTab === "foodSpots" ? (
-                        <DollarSign className="w-4 h-4" />
-                      ) : activeTab === "events" ? (
-                        <Calendar className="w-4 h-4" />
-                      ) : (
-                        <Tag className="w-4 h-4" />
-                      )}
-                      {activeTab === "foodSpots" ? "Price Range" : activeTab === "events" ? "Date" : "Entrance Fee"}
-                    </label>
-                    {activeTab === "foodSpots" ? (
-                      <select 
-                        name="priceRange" 
-                        defaultValue={isEditing?.priceRange} 
-                        className="w-full bg-white border border-clay rounded-2xl p-5 font-bold text-stone outline-none focus:ring-2 focus:ring-earth" 
-                        required
-                      >
-                        <option value="">Select price range</option>
-                        {priceRangeOptions.map(option => (
-                          <option key={option} value={option}>{option}</option>
-                        ))}
+                      <label className="form-label"><Tag style={{ width: 11, height: 11 }} /> Category</label>
+                      <select name="category" defaultValue={isEditing?.category} className="form-input" required>
+                        <option value="">Select category</option>
+                        {categoryOptions[activeTab].map(o => <option key={o} value={o}>{o}</option>)}
                       </select>
-                    ) : activeTab === "events" ? (
-                      <input 
-                        name="date" 
-                        defaultValue={isEditing?.date} 
-                        className="w-full bg-white border border-clay rounded-2xl p-5 font-bold text-stone outline-none focus:ring-2 focus:ring-earth" 
-                        required 
-                        placeholder="e.g., March 1-31"
-                      />
-                    ) : (
-                      <input 
-                        name="entranceFee" 
-                        type="number"
-                        defaultValue={isEditing?.entranceFee} 
-                        className="w-full bg-white border border-clay rounded-2xl p-5 font-bold text-stone outline-none focus:ring-2 focus:ring-earth" 
-                        required 
-                        placeholder="e.g., 100"
-                      />
-                    )}
-                  </div>
-                </div>
-
-                {/* Image URL */}
-                <div className="space-y-3">
-                  <label className="text-xs font-black uppercase tracking-widest text-stone/30 flex items-center gap-2">
-                    <Image className="w-4 h-4" /> Image URL
-                  </label>
-                  <div className="flex gap-4">
-                    <input 
-                      name={activeTab === "foodSpots" ? "image" : activeTab === "events" ? "image" : "images"} 
-                      defaultValue={activeTab === "foodSpots" ? isEditing?.image : activeTab === "events" ? isEditing?.image : isEditing?.images?.[0]} 
-                      className="flex-1 bg-white border border-clay rounded-2xl p-5 font-bold text-stone outline-none focus:ring-2 focus:ring-earth" 
-                      required 
-                      placeholder="https://images.unsplash.com/photo-..."
-                    />
-                    <button 
-                      type="button"
-                      className="px-6 bg-gradient-to-r from-blue-500/10 to-cyan-500/10 text-blue-600 rounded-2xl border border-blue-500/20 hover:bg-blue-500/20 transition-all flex items-center gap-2"
-                    >
-                      <Upload className="w-5 h-5" />
-                      Upload
-                    </button>
-                  </div>
-                </div>
-
-                {/* Address/Location */}
-                {activeTab !== "events" && (
-                  <div className="space-y-3">
-                    <label className="text-xs font-black uppercase tracking-widest text-stone/30 flex items-center gap-2">
-                      <Map className="w-4 h-4" /> Address
-                    </label>
-                    <input 
-                      name="address" 
-                      defaultValue={isEditing?.location?.address} 
-                      className="w-full bg-white border border-clay rounded-2xl p-5 font-bold text-stone outline-none focus:ring-2 focus:ring-earth" 
-                      required 
-                      placeholder="Full address including city"
-                    />
-                  </div>
-                )}
-
-                {activeTab === "events" && (
-                  <div className="space-y-3">
-                    <label className="text-xs font-black uppercase tracking-widest text-stone/30 flex items-center gap-2">
-                      <MapPin className="w-4 h-4" /> Location Name
-                    </label>
-                    <input 
-                      name="location" 
-                      defaultValue={isEditing?.location} 
-                      className="w-full bg-white border border-clay rounded-2xl p-5 font-bold text-stone outline-none focus:ring-2 focus:ring-earth" 
-                      required 
-                      placeholder="e.g., Malaybalay City, Bukidnon"
-                    />
-                  </div>
-                )}
-
-                {/* Additional Fields */}
-                {activeTab === "guides" && (
-                  <>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-3">
-                        <label className="text-xs font-black uppercase tracking-widest text-stone/30 flex items-center gap-2">
-                          <DollarSign className="w-4 h-4" /> Price Per Day
-                        </label>
-                        <input 
-                          name="pricePerDay" 
-                          type="number" 
-                          defaultValue={isEditing?.pricePerDay} 
-                          className="w-full bg-white border border-clay rounded-2xl p-5 font-bold text-stone outline-none focus:ring-2 focus:ring-earth" 
-                          required 
-                        />
-                      </div>
-                      <div className="space-y-3">
-                        <label className="text-xs font-black uppercase tracking-widest text-stone/30 flex items-center gap-2">
-                          <Users className="w-4 h-4" /> Experience
-                        </label>
-                        <select 
-                          name="experience" 
-                          defaultValue={isEditing?.experience} 
-                          className="w-full bg-white border border-clay rounded-2xl p-5 font-bold text-stone outline-none focus:ring-2 focus:ring-earth" 
-                          required
-                        >
-                          <option value="">Select experience level</option>
-                          {experienceOptions.map(option => (
-                            <option key={option} value={option}>{option}</option>
-                          ))}
-                        </select>
-                      </div>
                     </div>
-                    <div className="space-y-3">
-                      <label className="text-xs font-black uppercase tracking-widest text-stone/30 flex items-center gap-2">
-                        <Tag className="w-4 h-4" /> Specialties
+                  </div>
+
+                  <div>
+                    <label className="form-label"><Text style={{ width: 11, height: 11 }} /> Description</label>
+                    <textarea name="description" defaultValue={isEditing?.description} className="form-input" required placeholder="Enter description" style={{ minHeight: 100, resize: "vertical" }} />
+                  </div>
+
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                    <div>
+                      <label className="form-label"><Star style={{ width: 11, height: 11 }} /> Rating (1–5)</label>
+                      <input name="rating" type="number" step="0.1" min="1" max="5" defaultValue={isEditing?.rating || 4.5} className="form-input" required />
+                    </div>
+                    <div>
+                      <label className="form-label">
+                        {activeTab === "foodSpots" ? <DollarSign style={{ width: 11, height: 11 }} /> : <Calendar style={{ width: 11, height: 11 }} />}
+                        {activeTab === "foodSpots" ? "Price Range" : activeTab === "events" ? "Date" : "Entrance Fee"}
                       </label>
-                      <select 
-                        name="specialties" 
-                        multiple
-                        defaultValue={isEditing?.specialties || []} 
-                        className="w-full bg-white border border-clay rounded-2xl p-5 font-bold text-stone outline-none focus:ring-2 focus:ring-earth min-h-[120px]" 
-                      >
-                        {specialtiesOptions.map(option => (
-                          <option key={option} value={option}>{option}</option>
-                        ))}
-                      </select>
-                      <p className="text-stone/40 text-xs mt-2">Hold Ctrl/Cmd to select multiple options</p>
+                      {activeTab === "foodSpots" ? (
+                        <select name="priceRange" defaultValue={isEditing?.priceRange} className="form-input" required>
+                          <option value="">Select range</option>
+                          {priceRangeOptions.map(o => <option key={o} value={o}>{o}</option>)}
+                        </select>
+                      ) : activeTab === "events" ? (
+                        <input name="date" defaultValue={isEditing?.date} className="form-input" required placeholder="e.g. March 1–31" />
+                      ) : (
+                        <input name="entranceFee" type="number" defaultValue={isEditing?.entranceFee} className="form-input" required placeholder="e.g. 100" />
+                      )}
                     </div>
-                  </>
-                )}
+                  </div>
 
-                {/* Submit Button */}
-                <button className="w-full bg-gradient-to-r from-forest to-earth text-white py-6 rounded-[2rem] font-bold text-xl hover:opacity-90 transition-all shadow-xl shadow-forest/20 flex items-center justify-center gap-3 mt-10">
-                  <Save className="w-6 h-6" />
-                  {isEditing ? "Update" : "Create"} {currentTab.label.slice(0, -1)}
-                </button>
-              </form>
+                  <div>
+                    <label className="form-label"><Image style={{ width: 11, height: 11 }} /> Image URL</label>
+                    <input name={activeTab === "destinations" ? "images" : "image"}
+                      defaultValue={activeTab === "destinations" ? isEditing?.images?.[0] : isEditing?.image}
+                      className="form-input" required placeholder="https://images.unsplash.com/…" />
+                  </div>
+
+                  {activeTab !== "events" && (
+                    <div>
+                      <label className="form-label"><Map style={{ width: 11, height: 11 }} /> Address</label>
+                      <input name="address" defaultValue={isEditing?.location?.address} className="form-input" required placeholder="Full address" />
+                    </div>
+                  )}
+                  {activeTab === "events" && (
+                    <div>
+                      <label className="form-label"><MapPin style={{ width: 11, height: 11 }} /> Location Name</label>
+                      <input name="location" defaultValue={isEditing?.location} className="form-input" required placeholder="e.g. Malaybalay City" />
+                    </div>
+                  )}
+
+                  {activeTab === "guides" && (
+                    <>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                        <div>
+                          <label className="form-label"><DollarSign style={{ width: 11, height: 11 }} /> Price Per Day</label>
+                          <input name="pricePerDay" type="number" defaultValue={isEditing?.pricePerDay} className="form-input" required />
+                        </div>
+                        <div>
+                          <label className="form-label"><Users style={{ width: 11, height: 11 }} /> Experience</label>
+                          <select name="experience" defaultValue={isEditing?.experience} className="form-input" required>
+                            <option value="">Select level</option>
+                            {experienceOptions.map(o => <option key={o} value={o}>{o}</option>)}
+                          </select>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="form-label"><Tag style={{ width: 11, height: 11 }} /> Specialties</label>
+                        <select name="specialties" multiple defaultValue={isEditing?.specialties || []} className="form-input" style={{ minHeight: 100 }}>
+                          {specialtiesOptions.map(o => <option key={o} value={o}>{o}</option>)}
+                        </select>
+                        <p className="bk-mono" style={{ fontSize: 9, color: "#B8B0A4", marginTop: 6, letterSpacing: "0.1em" }}>Hold Ctrl/Cmd to select multiple</p>
+                      </div>
+                    </>
+                  )}
+
+                  <button type="submit"
+                    style={{ width: "100%", padding: "16px", background: "#C4622D", color: "#F5F0E8", border: "none", fontSize: 15, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 8, borderRadius: 2 }}>
+                    <Save style={{ width: 16, height: 16 }} />
+                    {isEditing ? "Update" : "Create"} {tab.label.slice(0, -1)}
+                  </button>
+                </form>
+              </motion.div>
             </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+          )}
+        </AnimatePresence>
+      </div>
+    </>
   );
 }

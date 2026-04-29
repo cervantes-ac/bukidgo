@@ -1,15 +1,50 @@
 import React, { useState } from "react";
 import { auth, db } from "../lib/firebase";
-import { 
-  createUserWithEmailAndPassword, 
+import {
+  createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   sendPasswordResetEmail,
   AuthError
 } from "firebase/auth";
-import { setDoc, doc, getDoc } from "firebase/firestore";
+import { setDoc, doc } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
-import { LogIn, UserPlus, Mail, Lock, AlertCircle, CheckCircle, Eye, EyeOff } from "lucide-react";
+import { LogIn, UserPlus, Mail, Lock, AlertCircle, CheckCircle, Eye, EyeOff, ArrowUpRight, Mountain } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
+
+const S = `
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;0,9..144,900;1,9..144,300;1,9..144,700&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
+  .bk-display { font-family: 'Fraunces', Georgia, serif; }
+  .bk-mono { font-family: 'JetBrains Mono', monospace; }
+  .auth-input {
+    width: 100%; padding: 14px 16px 14px 44px;
+    background: #F5F0E8; border: 1px solid #DDD6C8;
+    font-family: 'Outfit', sans-serif; font-size: 15px;
+    color: #1A1208; outline: none; transition: border-color 0.15s;
+    border-radius: 2px;
+  }
+  .auth-input::placeholder { color: #B8B0A4; }
+  .auth-input:focus { border-color: #C4622D; }
+  .auth-btn-primary {
+    width: 100%; padding: 16px;
+    background: #C4622D; color: #F5F0E8;
+    border: none; font-family: 'Outfit', sans-serif;
+    font-size: 15px; font-weight: 700; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    transition: background 0.15s; border-radius: 2px;
+  }
+  .auth-btn-primary:hover { background: #A8501F; }
+  .auth-btn-primary:disabled { background: #DDD6C8; color: #B8B0A4; cursor: not-allowed; }
+  .tab-btn {
+    flex: 1; padding: 12px;
+    font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 600;
+    background: transparent; border: none; cursor: pointer;
+    transition: all 0.15s; border-bottom: 2px solid transparent;
+  }
+  .tab-btn.active { color: #C4622D; border-bottom-color: #C4622D; }
+  .tab-btn.inactive { color: #B8B0A4; }
+  .tab-btn.inactive:hover { color: #7A6E61; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+`;
 
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
@@ -23,98 +58,48 @@ export default function Auth() {
   const [resetEmailSent, setResetEmailSent] = useState(false);
   const navigate = useNavigate();
 
-  // Clear messages after 5 seconds
   React.useEffect(() => {
     if (error || success) {
-      const timer = setTimeout(() => {
-        setError(null);
-        setSuccess(null);
-      }, 5000);
+      const timer = setTimeout(() => { setError(null); setSuccess(null); }, 5000);
       return () => clearTimeout(timer);
     }
   }, [error, success]);
 
   const getAuthErrorMessage = (error: AuthError): string => {
     switch (error.code) {
-      case 'auth/user-not-found':
-        return 'No account found with this email address.';
-      case 'auth/wrong-password':
-        return 'Incorrect password. Please try again.';
-      case 'auth/email-already-in-use':
-        return 'An account with this email already exists.';
-      case 'auth/weak-password':
-        return 'Password should be at least 6 characters long.';
-      case 'auth/invalid-email':
-        return 'Please enter a valid email address.';
-      case 'auth/operation-not-allowed':
-        return 'Email/password sign-in is not enabled. Please contact support or try Google sign-in.';
-      case 'auth/too-many-requests':
-        return 'Too many failed attempts. Please try again later.';
-      case 'auth/network-request-failed':
-        return 'Network error. Please check your connection and try again.';
-      case 'auth/popup-closed-by-user':
-        return 'Sign-in was cancelled. Please try again.';
-      case 'auth/popup-blocked':
-        return 'Pop-up was blocked. Please allow pop-ups and try again.';
-      case 'auth/cancelled-popup-request':
-        return 'Sign-in was cancelled. Please try again.';
-      default:
-        return error.message || 'An unexpected error occurred. Please try again.';
+      case 'auth/user-not-found': return 'No account found with this email address.';
+      case 'auth/wrong-password': return 'Incorrect password. Please try again.';
+      case 'auth/email-already-in-use': return 'An account with this email already exists.';
+      case 'auth/weak-password': return 'Password should be at least 6 characters long.';
+      case 'auth/invalid-email': return 'Please enter a valid email address.';
+      case 'auth/too-many-requests': return 'Too many failed attempts. Please try again later.';
+      case 'auth/network-request-failed': return 'Network error. Please check your connection.';
+      default: return error.message || 'An unexpected error occurred. Please try again.';
     }
   };
 
   const handleEmailAuth = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setError(null);
-    setSuccess(null);
-    setLoading(true);
-
-    // Validation
-    if (!email || !password) {
-      setError('Please fill in all fields.');
-      setLoading(false);
-      return;
-    }
-
-    if (!isLogin && password !== confirmPassword) {
-      setError('Passwords do not match.');
-      setLoading(false);
-      return;
-    }
-
-    if (!isLogin && password.length < 6) {
-      setError('Password must be at least 6 characters long.');
-      setLoading(false);
-      return;
-    }
-
+    setError(null); setSuccess(null); setLoading(true);
+    if (!email || !password) { setError('Please fill in all fields.'); setLoading(false); return; }
+    if (!isLogin && password !== confirmPassword) { setError('Passwords do not match.'); setLoading(false); return; }
+    if (!isLogin && password.length < 6) { setError('Password must be at least 6 characters.'); setLoading(false); return; }
     try {
       if (isLogin) {
-        // Sign in existing user
         await signInWithEmailAndPassword(auth, email, password);
-        setSuccess('Successfully signed in!');
+        setSuccess('Welcome back!');
       } else {
-        // Create new user
         const result = await createUserWithEmailAndPassword(auth, email, password);
-        
-        // Create user document
         await setDoc(doc(db, "users", result.user.uid), {
-          uid: result.user.uid,
-          email: result.user.email,
+          uid: result.user.uid, email: result.user.email,
           displayName: result.user.displayName || email.split('@')[0],
-          photoURL: null,
-          role: "user",
-          createdAt: new Date().toISOString(),
-          lastLoginAt: new Date().toISOString(),
-          provider: 'email'
+          photoURL: null, role: "user",
+          createdAt: new Date().toISOString(), lastLoginAt: new Date().toISOString(), provider: 'email'
         });
-
         setSuccess('Account created successfully!');
       }
-      
       setTimeout(() => navigate("/"), 1000);
     } catch (error: any) {
-      console.error('Email auth error:', error);
       setError(getAuthErrorMessage(error));
     } finally {
       setLoading(false);
@@ -122,11 +107,7 @@ export default function Auth() {
   };
 
   const handlePasswordReset = async () => {
-    if (!email) {
-      setError('Please enter your email address first.');
-      return;
-    }
-
+    if (!email) { setError('Please enter your email address first.'); return; }
     setLoading(true);
     try {
       await sendPasswordResetEmail(auth, email);
@@ -140,160 +121,173 @@ export default function Auth() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-linen">
-      <motion.div 
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="max-w-md w-full bg-white rounded-[2.5rem] p-10 shadow-2xl border border-clay"
-      >
-        <div className="text-center mb-10">
-          <h2 className="text-3xl font-serif font-bold text-forest">
-            {isLogin ? "Welcome Back" : "Create Account"}
-          </h2>
-          <p className="text-stone/40 mt-2 font-medium">
-            Access the best of Bukidnon tourism
-          </p>
+    <>
+      <style>{S}</style>
+      <div style={{ minHeight: "100vh", background: "#F5F0E8", display: "flex", fontFamily: "'Outfit', sans-serif" }}>
+
+        {/* Left panel — decorative */}
+        <div style={{
+          display: "none", flex: 1, background: "#1A1208", position: "relative", overflow: "hidden",
+          // shown on lg
+        }}
+          className="auth-left-panel"
+        >
+          <img
+            src="https://images.unsplash.com/photo-1518457607834-6e8d80c183c5?auto=format&fit=crop&q=80&w=1200"
+            style={{ width: "100%", height: "100%", objectFit: "cover", opacity: 0.35, position: "absolute", inset: 0 }}
+            alt=""
+          />
+          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, rgba(26,18,8,0.95) 0%, rgba(26,18,8,0.5) 100%)" }} />
+          <div style={{ position: "relative", zIndex: 10, padding: "64px 56px", height: "100%", display: "flex", flexDirection: "column" }}>
+            <div className="bk-mono" style={{ fontSize: 10, color: "#D4A853", letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: "auto", display: "flex", alignItems: "center", gap: 10 }}>
+              <span style={{ display: "inline-block", width: 24, height: 1, background: "#D4A853" }} />
+              BukidGo
+            </div>
+            <div>
+              <h2 className="bk-display" style={{ fontSize: "clamp(2.5rem,5vw,4rem)", fontWeight: 900, color: "#F5F0E8", lineHeight: 1.0, marginBottom: 20 }}>
+                Discover<br />the<br /><em style={{ color: "#D4A853" }}>Highlands</em>
+              </h2>
+              <p style={{ fontSize: 15, color: "rgba(245,240,232,0.5)", fontWeight: 300, lineHeight: 1.7, maxWidth: 320 }}>
+                Your gateway to Bukidnon's hidden waterfalls, tribal festivals, and mountain trails.
+              </p>
+              <div style={{ display: "flex", gap: 32, marginTop: 48 }}>
+                {[["50+", "Spots"], ["10+", "Guides"], ["∞", "Memories"]].map(([n, l]) => (
+                  <div key={l}>
+                    <div className="bk-display" style={{ fontSize: 28, fontWeight: 900, color: "#D4A853" }}>{n}</div>
+                    <div className="bk-mono" style={{ fontSize: 9, color: "rgba(245,240,232,0.3)", letterSpacing: "0.2em", textTransform: "uppercase" }}>{l}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
 
-        <AnimatePresence mode="wait">
-          {error && (
-            <motion.div 
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-2xl text-sm font-medium flex items-start gap-3"
-            >
-              <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
-              <span>{error}</span>
-            </motion.div>
-          )}
-
-          {success && (
-            <motion.div 
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              className="mb-6 p-4 bg-green-50 border border-green-200 text-green-700 rounded-2xl text-sm font-medium flex items-start gap-3"
-            >
-              <CheckCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
-              <span>{success}</span>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        <form onSubmit={handleEmailAuth} className="space-y-6">
-          <div className="space-y-2">
-            <label className="text-[10px] font-bold text-stone/40 uppercase tracking-widest ml-1">
-              Email
-            </label>
-            <div className="relative">
-              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-stone/30" />
-              <input 
-                type="email" 
-                value={email}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
-                placeholder="you@example.com"
-                className="w-full bg-linen border border-clay rounded-2xl py-4 pl-12 pr-4 focus:ring-2 focus:ring-earth text-stone font-medium transition-all"
-                required
-              />
+        {/* Right panel — form */}
+        <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "48px 24px" }}>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            style={{ width: "100%", maxWidth: 460 }}
+          >
+            {/* Logo mark */}
+            <div style={{ marginBottom: 48, display: "flex", alignItems: "center", gap: 12 }}>
+              <div style={{ width: 40, height: 40, background: "#C4622D", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 2 }}>
+                <Mountain style={{ width: 20, height: 20, color: "#F5F0E8" }} />
+              </div>
+              <span className="bk-display" style={{ fontSize: 22, fontWeight: 700, color: "#1A1208" }}>BukidGo</span>
             </div>
-          </div>
 
-          <div className="space-y-2">
-            <label className="text-[10px] font-bold text-stone/40 uppercase tracking-widest ml-1">
-              Password
-            </label>
-            <div className="relative">
-              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-stone/30" />
-              <input 
-                type={showPassword ? "text" : "password"}
-                value={password}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className="w-full bg-linen border border-clay rounded-2xl py-4 pl-12 pr-12 focus:ring-2 focus:ring-earth text-stone font-medium transition-all"
-                required
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-stone/30 hover:text-stone/60 transition-colors"
-              >
-                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            <h1 className="bk-display" style={{ fontSize: 40, fontWeight: 900, color: "#1A1208", lineHeight: 1.0, marginBottom: 8 }}>
+              {isLogin ? "Welcome back." : "Join the journey."}
+            </h1>
+            <p style={{ fontSize: 14, color: "#7A6E61", fontWeight: 300, marginBottom: 36 }}>
+              {isLogin ? "Sign in to continue your Bukidnon adventure." : "Create an account and start exploring."}
+            </p>
+
+            {/* Tab switcher */}
+            <div style={{ display: "flex", borderBottom: "1px solid #DDD6C8", marginBottom: 32 }}>
+              <button className={`tab-btn ${isLogin ? "active" : "inactive"}`} onClick={() => { setIsLogin(true); setError(null); setSuccess(null); }}>
+                Sign In
+              </button>
+              <button className={`tab-btn ${!isLogin ? "active" : "inactive"}`} onClick={() => { setIsLogin(false); setError(null); setSuccess(null); }}>
+                Create Account
               </button>
             </div>
-          </div>
 
-          {!isLogin && (
-            <div className="space-y-2">
-              <label className="text-[10px] font-bold text-stone/40 uppercase tracking-widest ml-1">
-                Confirm Password
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-stone/30" />
-                <input 
-                  type={showPassword ? "text" : "password"}
-                  value={confirmPassword}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setConfirmPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full bg-linen border border-clay rounded-2xl py-4 pl-12 pr-4 focus:ring-2 focus:ring-earth text-stone font-medium transition-all"
-                  required
-                />
+            {/* Alerts */}
+            <AnimatePresence mode="wait">
+              {error && (
+                <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                  style={{ marginBottom: 20, padding: "12px 16px", background: "rgba(196,98,45,0.08)", border: "1px solid rgba(196,98,45,0.25)", borderRadius: 2, fontSize: 13, color: "#C4622D", display: "flex", alignItems: "flex-start", gap: 8 }}>
+                  <AlertCircle style={{ width: 16, height: 16, flexShrink: 0, marginTop: 1 }} />
+                  <span>{error}</span>
+                </motion.div>
+              )}
+              {success && (
+                <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                  style={{ marginBottom: 20, padding: "12px 16px", background: "rgba(74,124,89,0.08)", border: "1px solid rgba(74,124,89,0.25)", borderRadius: 2, fontSize: 13, color: "#4A7C59", display: "flex", alignItems: "flex-start", gap: 8 }}>
+                  <CheckCircle style={{ width: 16, height: 16, flexShrink: 0, marginTop: 1 }} />
+                  <span>{success}</span>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            <form onSubmit={handleEmailAuth} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              {/* Email */}
+              <div>
+                <label className="bk-mono" style={{ fontSize: 9, color: "#7A6E61", letterSpacing: "0.2em", textTransform: "uppercase", display: "block", marginBottom: 8 }}>
+                  Email Address
+                </label>
+                <div style={{ position: "relative" }}>
+                  <Mail style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", width: 16, height: 16, color: "#B8B0A4" }} />
+                  <input type="email" value={email} onChange={e => setEmail(e.target.value)}
+                    placeholder="you@example.com" className="auth-input" required />
+                </div>
               </div>
-            </div>
-          )}
 
-          {isLogin && (
-            <div className="text-right">
-              <button
-                type="button"
-                onClick={handlePasswordReset}
-                disabled={loading || resetEmailSent}
-                className="text-sm text-earth hover:text-earth/80 font-medium transition-colors disabled:opacity-50"
-              >
-                {resetEmailSent ? 'Reset email sent' : 'Forgot password?'}
+              {/* Password */}
+              <div>
+                <label className="bk-mono" style={{ fontSize: 9, color: "#7A6E61", letterSpacing: "0.2em", textTransform: "uppercase", display: "block", marginBottom: 8 }}>
+                  Password
+                </label>
+                <div style={{ position: "relative" }}>
+                  <Lock style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", width: 16, height: 16, color: "#B8B0A4" }} />
+                  <input type={showPassword ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)}
+                    placeholder="••••••••" className="auth-input" required />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)}
+                    style={{ position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "#B8B0A4", display: "flex" }}>
+                    {showPassword ? <EyeOff style={{ width: 16, height: 16 }} /> : <Eye style={{ width: 16, height: 16 }} />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Confirm password */}
+              <AnimatePresence>
+                {!isLogin && (
+                  <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} style={{ overflow: "hidden" }}>
+                    <label className="bk-mono" style={{ fontSize: 9, color: "#7A6E61", letterSpacing: "0.2em", textTransform: "uppercase", display: "block", marginBottom: 8 }}>
+                      Confirm Password
+                    </label>
+                    <div style={{ position: "relative" }}>
+                      <Lock style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", width: 16, height: 16, color: "#B8B0A4" }} />
+                      <input type={showPassword ? "text" : "password"} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)}
+                        placeholder="••••••••" className="auth-input" required />
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Forgot password */}
+              {isLogin && (
+                <div style={{ textAlign: "right", marginTop: -4 }}>
+                  <button type="button" onClick={handlePasswordReset} disabled={loading || resetEmailSent}
+                    style={{ background: "none", border: "none", cursor: "pointer", fontSize: 13, color: resetEmailSent ? "#4A7C59" : "#C4622D", fontWeight: 500 }}>
+                    {resetEmailSent ? "✓ Reset email sent" : "Forgot password?"}
+                  </button>
+                </div>
+              )}
+
+              <button type="submit" disabled={loading} className="auth-btn-primary" style={{ marginTop: 8 }}>
+                {loading ? (
+                  <div style={{ width: 18, height: 18, border: "2px solid rgba(245,240,232,0.3)", borderTopColor: "#F5F0E8", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+                ) : isLogin ? (
+                  <><LogIn style={{ width: 16, height: 16 }} /> Sign In</>
+                ) : (
+                  <><UserPlus style={{ width: 16, height: 16 }} /> Create Account</>
+                )}
               </button>
-            </div>
-          )}
+            </form>
 
-          <button 
-            type="submit"
-            disabled={loading}
-            className="w-full bg-forest text-white py-4 rounded-2xl font-bold hover:bg-forest/90 transition-all shadow-lg shadow-forest/20 mt-6 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? (
-              <div className="flex items-center justify-center gap-2">
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                {isLogin ? 'Signing In...' : 'Creating Account...'}
-              </div>
-            ) : isLogin ? (
-              <div className="flex items-center justify-center gap-2">
-                <LogIn className="w-4 h-4" /> Sign In
-              </div>
-            ) : (
-              <div className="flex items-center justify-center gap-2">
-                <UserPlus className="w-4 h-4" /> Create Account
-              </div>
-            )}
-          </button>
-        </form>
-
-        <p className="text-center text-sm text-stone/50 mt-10 font-medium">
-          {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
-          <button 
-            onClick={() => {
-              setIsLogin(!isLogin);
-              setError(null);
-              setSuccess(null);
-              setResetEmailSent(false);
-            }}
-            className="text-earth font-bold hover:underline transition-colors"
-            disabled={loading}
-          >
-            {isLogin ? "Sign Up" : "Sign In"}
-          </button>
-        </p>
-
-      </motion.div>
-    </div>
+            <p style={{ marginTop: 32, fontSize: 13, color: "#B8B0A4", textAlign: "center" }}>
+              {isLogin ? "New to BukidGo?" : "Already have an account?"}{" "}
+              <button onClick={() => { setIsLogin(!isLogin); setError(null); setSuccess(null); setResetEmailSent(false); }}
+                style={{ background: "none", border: "none", cursor: "pointer", color: "#C4622D", fontWeight: 600, fontSize: 13 }}>
+                {isLogin ? "Sign Up" : "Sign In"}
+              </button>
+            </p>
+          </motion.div>
+        </div>
+      </div>
+    </>
   );
 }

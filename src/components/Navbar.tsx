@@ -1,87 +1,228 @@
-// ─── PAGE: NAVBAR ─────────────────────────────────────────────
-const Navbar = ({ currentPage, setCurrentPage, user, onLogout }) => {
-  const [open, setOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
- 
-  const links = [
-    { name: "Explore", page: "explore" },
-    { name: "Food",    page: "food"    },
-    { name: "Guides",  page: "guides"  },
-    { name: "Events",  page: "events"  },
-    { name: "AI Plan", page: "ai"      },
+import { useState } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { auth } from "../lib/firebase";
+import { signOut } from "firebase/auth";
+import { Menu, X, User, Sparkles, Utensils, Calendar, LogOut, Settings, Compass, Users, Mountain } from "lucide-react";
+import { cn } from "../lib/utils";
+import { motion, AnimatePresence } from "motion/react";
+import { useFirebase } from "../contexts/FirebaseContext";
+
+const SHARED_STYLE = `
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;0,9..144,900;1,9..144,300;1,9..144,700&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
+  .bk-display { font-family: 'Fraunces', Georgia, serif; }
+  .bk-body { font-family: 'Outfit', system-ui, sans-serif; }
+  .bk-mono { font-family: 'JetBrains Mono', monospace; }
+`;
+
+export default function Navbar() {
+  const { user, isAdmin } = useFirebase();
+  const [isOpen, setIsOpen] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const handleLogout = async () => {
+    await signOut(auth);
+    navigate("/");
+  };
+
+  const navLinks = [
+    { name: "Explore", path: "/explore", icon: Compass },
+    { name: "Food", path: "/food", icon: Utensils },
+    { name: "Guides", path: "/guides", icon: Users },
+    { name: "Events", path: "/events", icon: Calendar },
+    { name: "AI Plan", path: "/ai-itinerary", icon: Sparkles },
   ];
- 
+
   return (
-    <nav style={{
-      position: "fixed", top: 0, left: 0, right: 0, zIndex: 100,
-      background: "rgba(247,240,230,0.92)",
-      backdropFilter: "blur(20px)",
-      borderBottom: "1px solid rgba(61,107,79,0.1)",
-      padding: "0 32px",
-    }}>
-      <div style={{ maxWidth: 1280, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", height: 68 }}>
-        {/* Logo */}
-        <button onClick={() => setCurrentPage("home")} style={{ display: "flex", alignItems: "center", gap: 10, background: "none", border: "none", cursor: "pointer" }}>
-          <div style={{ width: 38, height: 38, background: T.jungle, borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <Icon name="map" size={18} color={T.gold} />
-          </div>
-          <span className="display" style={{ fontSize: 22, fontWeight: 700, color: T.jungle, letterSpacing: "-0.02em" }}>BukidGo</span>
-        </button>
- 
-        {/* Desktop links */}
-        <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-          {links.map(l => (
-            <button key={l.page} onClick={() => setCurrentPage(l.page)} style={{
-              background: currentPage === l.page ? "rgba(61,107,79,0.1)" : "none",
-              border: "none",
-              padding: "8px 16px",
-              borderRadius: 10,
-              fontFamily: "var(--ff-body)",
-              fontSize: 14,
-              fontWeight: currentPage === l.page ? 600 : 400,
-              color: currentPage === l.page ? T.moss : T.stone,
-              cursor: "pointer",
-              transition: "all 0.2s",
-            }}>
-              {l.name}
-            </button>
-          ))}
-          {user?.isAdmin && (
-            <button onClick={() => setCurrentPage("admin")} style={{
-              background: T.amber, color: "white", border: "none",
-              padding: "7px 14px", borderRadius: 10,
-              fontFamily: "var(--ff-body)", fontSize: 13, fontWeight: 600,
-              cursor: "pointer", marginLeft: 4
-            }}>
-              Admin
-            </button>
-          )}
-        </div>
- 
-        {/* Auth */}
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          {user ? (
-            <>
-              <button onClick={() => setCurrentPage("profile")} style={{
-                width: 38, height: 38, borderRadius: 10,
-                background: T.mist, border: "1.5px solid rgba(61,107,79,0.15)",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                cursor: "pointer"
+    <>
+      <style>{SHARED_STYLE}</style>
+      <nav
+        className="bk-body fixed top-0 w-full z-50"
+        style={{
+          background: "rgba(245,240,232,0.96)",
+          backdropFilter: "blur(12px)",
+          borderBottom: "1px solid #DDD6C8",
+        }}
+      >
+        <div style={{ maxWidth: 1280, margin: "0 auto", padding: "0 2rem" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", height: 72 }}>
+            
+            {/* Logo */}
+            <Link to="/" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 12 }}>
+              <div style={{
+                width: 40, height: 40, borderRadius: 6, background: "#1A1208",
+                display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0
               }}>
-                <Icon name="user" size={16} color={T.moss} />
-              </button>
-              <button onClick={onLogout} className="btn-ghost" style={{ padding: "8px 14px", fontSize: 13 }}>
-                <Icon name="logout" size={14} />
-                Out
-              </button>
-            </>
-          ) : (
-            <button className="btn-primary" onClick={() => setCurrentPage("auth")} style={{ padding: "9px 22px" }}>
-              Sign In
+                <Mountain style={{ width: 20, height: 20, color: "#D4A853" }} />
+              </div>
+              <div>
+                <div className="bk-display" style={{ fontSize: 22, fontWeight: 900, color: "#1A1208", lineHeight: 1 }}>
+                  BukidGo
+                </div>
+                <div className="bk-mono" style={{ fontSize: 9, color: "#7A6E61", letterSpacing: "0.2em", textTransform: "uppercase" }}>
+                  Highland Explorer
+                </div>
+              </div>
+            </Link>
+
+            {/* Desktop Nav */}
+            <div style={{ display: "flex", alignItems: "center", gap: 4 }} className="hidden md:flex">
+              {navLinks.map((link) => {
+                const Icon = link.icon;
+                const isActive = location.pathname === link.path;
+                return (
+                  <Link
+                    key={link.path}
+                    to={link.path}
+                    style={{
+                      display: "flex", alignItems: "center", gap: 6,
+                      padding: "8px 14px", borderRadius: 4, textDecoration: "none",
+                      fontSize: 14, fontWeight: 500, transition: "all 0.15s",
+                      background: isActive ? "#1A1208" : "transparent",
+                      color: isActive ? "#F5F0E8" : "#7A6E61",
+                    }}
+                    onMouseEnter={e => { if (!isActive) { (e.currentTarget as HTMLElement).style.color = "#1A1208"; (e.currentTarget as HTMLElement).style.background = "#DDD6C8"; } }}
+                    onMouseLeave={e => { if (!isActive) { (e.currentTarget as HTMLElement).style.color = "#7A6E61"; (e.currentTarget as HTMLElement).style.background = "transparent"; } }}
+                  >
+                    <Icon style={{ width: 15, height: 15 }} />
+                    {link.name}
+                    {isActive && (
+                      <div style={{ width: 5, height: 5, borderRadius: "50%", background: "#D4A853", marginLeft: 2 }} />
+                    )}
+                  </Link>
+                );
+              })}
+
+              {isAdmin && (
+                <Link
+                  to="/admin"
+                  style={{
+                    display: "flex", alignItems: "center", gap: 6,
+                    padding: "8px 14px", borderRadius: 4, textDecoration: "none",
+                    fontSize: 14, fontWeight: 600, marginLeft: 8,
+                    background: location.pathname === "/admin" ? "#C4622D" : "#FAF7F2",
+                    color: location.pathname === "/admin" ? "#fff" : "#C4622D",
+                    border: "1px solid #C4622D",
+                  }}
+                >
+                  <Settings style={{ width: 15, height: 15 }} />
+                  Admin
+                </Link>
+              )}
+            </div>
+
+            {/* User Actions */}
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }} className="hidden md:flex">
+              {user ? (
+                <>
+                  <Link to="/profile" style={{
+                    display: "flex", alignItems: "center", gap: 8,
+                    padding: "8px 14px", borderRadius: 4, textDecoration: "none",
+                    fontSize: 14, fontWeight: 500, color: "#7A6E61",
+                    border: "1px solid #DDD6C8",
+                  }}>
+                    {user.photoURL ? (
+                      <img src={user.photoURL} style={{ width: 26, height: 26, borderRadius: "50%", objectFit: "cover" }} alt="" />
+                    ) : (
+                      <User style={{ width: 15, height: 15 }} />
+                    )}
+                    {user.displayName?.split(" ")[0] || "Profile"}
+                  </Link>
+                  <button
+                    onClick={handleLogout}
+                    style={{
+                      display: "flex", alignItems: "center", gap: 6,
+                      padding: "8px 14px", borderRadius: 4, border: "none",
+                      fontSize: 14, fontWeight: 500, color: "#7A6E61",
+                      background: "transparent", cursor: "pointer",
+                    }}
+                  >
+                    <LogOut style={{ width: 15, height: 15 }} />
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <Link to="/auth" style={{
+                  display: "flex", alignItems: "center", gap: 6,
+                  padding: "10px 20px", borderRadius: 4, textDecoration: "none",
+                  fontSize: 14, fontWeight: 600, color: "#F5F0E8", background: "#1A1208",
+                }}>
+                  <User style={{ width: 15, height: 15 }} />
+                  Sign In
+                </Link>
+              )}
+            </div>
+
+            {/* Mobile Toggle */}
+            <button
+              onClick={() => setIsOpen(!isOpen)}
+              style={{
+                width: 40, height: 40, borderRadius: 4, border: "1px solid #DDD6C8",
+                background: "transparent", cursor: "pointer",
+                display: "flex", alignItems: "center", justifyContent: "center",
+              }}
+              className="md:hidden"
+            >
+              {isOpen ? <X style={{ width: 18, height: 18 }} /> : <Menu style={{ width: 18, height: 18 }} />}
             </button>
-          )}
+          </div>
         </div>
-      </div>
-    </nav>
+
+        {/* Mobile Menu */}
+        <AnimatePresence>
+          {isOpen && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              style={{ overflow: "hidden", borderTop: "1px solid #DDD6C8", background: "#F5F0E8" }}
+            >
+              <div style={{ padding: "16px 24px", display: "flex", flexDirection: "column", gap: 4 }}>
+                {navLinks.map((link) => {
+                  const Icon = link.icon;
+                  const isActive = location.pathname === link.path;
+                  return (
+                    <Link
+                      key={link.path}
+                      to={link.path}
+                      onClick={() => setIsOpen(false)}
+                      style={{
+                        display: "flex", alignItems: "center", gap: 10,
+                        padding: "12px 16px", borderRadius: 4, textDecoration: "none",
+                        fontSize: 15, fontWeight: 500,
+                        background: isActive ? "#1A1208" : "transparent",
+                        color: isActive ? "#F5F0E8" : "#1A1208",
+                      }}
+                    >
+                      <Icon style={{ width: 18, height: 18 }} />
+                      {link.name}
+                    </Link>
+                  );
+                })}
+                <div style={{ borderTop: "1px solid #DDD6C8", marginTop: 8, paddingTop: 8 }}>
+                  {user ? (
+                    <>
+                      <Link to="/profile" onClick={() => setIsOpen(false)}
+                        style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 16px", textDecoration: "none", color: "#1A1208", fontSize: 15, fontWeight: 500 }}>
+                        <User style={{ width: 18, height: 18 }} /> My Profile
+                      </Link>
+                      <button onClick={() => { handleLogout(); setIsOpen(false); }}
+                        style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 16px", width: "100%", border: "none", background: "transparent", color: "#C4622D", fontSize: 15, fontWeight: 500, cursor: "pointer", textAlign: "left" }}>
+                        <LogOut style={{ width: 18, height: 18 }} /> Logout
+                      </button>
+                    </>
+                  ) : (
+                    <Link to="/auth" onClick={() => setIsOpen(false)}
+                      style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 20px", textDecoration: "none", color: "#F5F0E8", background: "#1A1208", borderRadius: 4, fontSize: 15, fontWeight: 600, justifyContent: "center" }}>
+                      <User style={{ width: 18, height: 18 }} /> Sign In
+                    </Link>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </nav>
+    </>
   );
-};
+}

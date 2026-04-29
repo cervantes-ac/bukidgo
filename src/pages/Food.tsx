@@ -1,12 +1,29 @@
-import { Utensils, Star, MapPin, X, Navigation, Filter, Search, Calendar, CheckCircle2, Coffee, DollarSign } from "lucide-react";
+import { Utensils, Star, MapPin, X, Navigation, Search, Calendar, CheckCircle2 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useState, useEffect, useMemo } from "react";
 import { FoodSpot } from "../types";
-import { cn } from "../lib/utils";
 import { useFirebase } from "../contexts/FirebaseContext";
 import { db, OperationType, handleFirestoreError } from "../lib/firebase";
 import { collection, addDoc, serverTimestamp, onSnapshot } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
+
+const S = `
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;0,9..144,900;1,9..144,300;1,9..144,700&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
+  .bk-display { font-family: 'Fraunces', Georgia, serif; }
+  .bk-mono { font-family: 'JetBrains Mono', monospace; }
+  .food-card { transition: transform 0.25s ease, box-shadow 0.25s ease; }
+  .food-card:hover { transform: translateY(-4px); box-shadow: 0 16px 40px rgba(26,18,8,0.12); }
+  .food-img { transition: transform 0.7s ease; }
+  .food-card:hover .food-img { transform: scale(1.07); }
+  .modal-scroll::-webkit-scrollbar { width: 4px; }
+  .modal-scroll::-webkit-scrollbar-thumb { background: #DDD6C8; border-radius: 99px; }
+  input, select { font-family: 'Outfit', system-ui, sans-serif; }
+  select option { background: #FAF7F2; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .price-badge-low { background: #dcfce7; color: #166534; }
+  .price-badge-mid { background: #fef9c3; color: #854d0e; }
+  .price-badge-high { background: #fee2e2; color: #991b1b; }
+`;
 
 export default function Food() {
   const [selectedFood, setSelectedFood] = useState<FoodSpot | null>(null);
@@ -16,20 +33,17 @@ export default function Food() {
   const [isBooking, setIsBooking] = useState(false);
   const [booked, setBooked] = useState(false);
   const navigate = useNavigate();
-
   const [liveFoodSpots, setLiveFoodSpots] = useState<FoodSpot[]>([]);
   const [loading, setLoading] = useState(true);
+  const [sortBy, setSortBy] = useState<"rating" | "price" | "name">("rating");
+  const [cuisineTypes, setCuisineTypes] = useState<string[]>([]);
 
   useEffect(() => {
-    return onSnapshot(collection(db, "foodSpots"), (snapshot) => {
+    return onSnapshot(collection(db, "foodSpots"), snapshot => {
       if (!snapshot.empty) setLiveFoodSpots(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FoodSpot)));
       setLoading(false);
     });
   }, []);
-
-  const [minRating, setMinRating] = useState(0);
-  const [cuisineTypes, setCuisineTypes] = useState<string[]>([]);
-  const [sortBy, setSortBy] = useState<"rating" | "price" | "name">("rating");
 
   const filters = [
     { id: "all", label: "All" },
@@ -40,10 +54,10 @@ export default function Food() {
 
   const allCuisineTypes = useMemo(() => {
     const types = new Set<string>();
-    liveFoodSpots.forEach(spot => {
-      if (spot.cuisineType) {
-        if (Array.isArray(spot.cuisineType)) spot.cuisineType.forEach((t: string) => types.add(t));
-        else types.add(spot.cuisineType);
+    liveFoodSpots.forEach(s => {
+      if (s.cuisineType) {
+        if (Array.isArray(s.cuisineType)) s.cuisineType.forEach((t: string) => types.add(t));
+        else types.add(s.cuisineType as string);
       }
     });
     return Array.from(types);
@@ -53,26 +67,24 @@ export default function Food() {
     let filtered = liveFoodSpots.filter(s => {
       const matchesFilter = activeFilter === "all" || s.priceRange === activeFilter || s.priceRange.includes(activeFilter);
       const matchesSearch = s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           s.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           s.location.address.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesRating = s.rating >= minRating;
+        s.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        s.location.address.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesCuisine = cuisineTypes.length === 0 ||
         (s.cuisineType && (Array.isArray(s.cuisineType)
           ? s.cuisineType.some((t: string) => cuisineTypes.includes(t))
-          : cuisineTypes.includes(s.cuisineType)));
-      return matchesFilter && matchesSearch && matchesRating && matchesCuisine;
+          : cuisineTypes.includes(s.cuisineType as string)));
+      return matchesFilter && matchesSearch && matchesCuisine;
     });
     filtered.sort((a, b) => {
       if (sortBy === "rating") return b.rating - a.rating;
       if (sortBy === "price") {
-        const pa = a.priceRange === "₱" ? 1 : a.priceRange === "₱₱" ? 2 : 3;
-        const pb = b.priceRange === "₱" ? 1 : b.priceRange === "₱₱" ? 2 : 3;
-        return pa - pb;
+        const p = { "₱": 1, "₱₱": 2, "₱₱₱": 3 };
+        return (p[a.priceRange as keyof typeof p] || 1) - (p[b.priceRange as keyof typeof p] || 1);
       }
       return a.name.localeCompare(b.name);
     });
     return filtered;
-  }, [liveFoodSpots, searchQuery, activeFilter, minRating, cuisineTypes, sortBy]);
+  }, [liveFoodSpots, searchQuery, activeFilter, cuisineTypes, sortBy]);
 
   const handleReserve = async () => {
     if (!user) { navigate('/auth'); return; }
@@ -87,293 +99,235 @@ export default function Food() {
       setTimeout(() => { setBooked(false); setSelectedFood(null); }, 3000);
     } catch (error) {
       handleFirestoreError(error, OperationType.WRITE, "bookings");
-    } finally {
-      setIsBooking(false);
-    }
+    } finally { setIsBooking(false); }
   };
 
-  const priceColors: Record<string, string> = { "₱": "#22c55e", "₱₱": "#f59e0b", "₱₱₱": "#ef4444" };
+  const priceBadgeClass = (pr: string) => pr === "₱" ? "price-badge-low" : pr === "₱₱₱" ? "price-badge-high" : "price-badge-mid";
 
   return (
-    <div className="min-h-screen" style={{ background: '#faf6f0', fontFamily: "'DM Sans', sans-serif" }}>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=DM+Sans:wght@300;400;500&display=swap');
-        .food-display { font-family: 'Cormorant Garamond', serif; }
-        .food-card { transition: all 0.35s ease; }
-        .food-card:hover { transform: scale(1.02); box-shadow: 0 20px 50px rgba(180,100,30,0.15); }
-        .food-img { transition: transform 0.8s ease; }
-        .food-card:hover .food-img { transform: scale(1.1); }
-        .food-reveal { transform: translateY(8px); transition: transform 0.3s ease; }
-        .food-card:hover .food-reveal { transform: translateY(0); }
-        .modal-scroll::-webkit-scrollbar { width: 3px; }
-        .modal-scroll::-webkit-scrollbar-thumb { background: #e0d8cc; border-radius: 99px; }
-        input, select { background: #f0ead8 !important; border: 1.5px solid #e0d8cc !important; color: #2d1e0e !important; border-radius: 12px !important; }
-        input::placeholder { color: #c4b8a0 !important; }
-        input:focus, select:focus { border-color: #c47d2e !important; outline: none !important; box-shadow: none !important; }
-        select option { background: #faf6f0; }
-        .price-badge-₱ { background: #dcfce7; color: #15803d; }
-        .price-badge-₱₱ { background: #fef9c3; color: #a16207; }
-        .price-badge-₱₱₱ { background: #fee2e2; color: #b91c1c; }
-      `}</style>
+    <>
+      <style>{S}</style>
+      <div style={{ fontFamily: "'Outfit', system-ui, sans-serif", background: "#F5F0E8", color: "#1A1208", minHeight: "100vh" }}>
 
-      {/* Decorative top strip */}
-      <div style={{ background: '#2d1e0e', height: '6px', background: 'linear-gradient(90deg, #c47d2e, #e8a84c, #c47d2e)' }} />
+        {/* Decorative top bar */}
+        <div style={{ height: 4, background: "linear-gradient(90deg, #C4622D, #D4A853, #C4622D)" }} />
 
-      {/* Hero */}
-      <div className="px-6 md:px-12 pt-16 pb-14 border-b" style={{ borderColor: '#e0d8cc' }}>
-        <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-8 items-end">
+        {/* Hero */}
+        <div style={{ padding: "72px 2rem 56px", borderBottom: "1px solid #DDD6C8", maxWidth: 1280, margin: "0 auto" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 32, alignItems: "end", flexWrap: "wrap" }}>
             <div>
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-11 h-11 rounded-2xl flex items-center justify-center" style={{ background: '#c47d2e', color: '#fff' }}>
-                  <Coffee className="w-5 h-5" />
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+                <div style={{ width: 40, height: 40, background: "#C4622D", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <Utensils style={{ width: 18, height: 18, color: "#fff" }} />
                 </div>
-                <span className="text-[11px] font-semibold tracking-[0.35em] uppercase" style={{ color: '#c47d2e' }}>
+                <span className="bk-mono" style={{ fontSize: 10, color: "#C4622D", letterSpacing: "0.35em", textTransform: "uppercase", fontWeight: 700 }}>
                   Local Flavors · Bukidnon
                 </span>
               </div>
-
-              <h1 className="food-display font-bold leading-[0.92] mb-5" style={{ fontSize: 'clamp(3.5rem,8vw,7.5rem)', color: '#2d1e0e' }}>
-                Taste<br />
-                <em style={{ color: '#c47d2e' }}>Bukidnon</em><br />
-                Like a Local
+              <h1 className="bk-display" style={{ fontSize: "clamp(3rem,8vw,7rem)", fontWeight: 900, color: "#1A1208", lineHeight: 0.9, marginBottom: 16 }}>
+                Taste<br /><em style={{ color: "#C4622D" }}>Bukidnon</em><br />Like a Local
               </h1>
-
-              <p className="text-lg max-w-lg leading-relaxed font-light" style={{ color: '#8a7060' }}>
-                Discover authentic highland cuisine — from traditional Binaki to modern farm-to-table experiences.
+              <p style={{ fontSize: 16, color: "#7A6E61", maxWidth: 440, lineHeight: 1.7, fontWeight: 300 }}>
+                Authentic highland cuisine — from traditional Binaki to modern farm-to-table experiences.
               </p>
             </div>
-
-            {/* Decorative circle stat */}
-            <div className="flex items-center gap-8 lg:pb-2">
-              <div className="w-36 h-36 rounded-full border-4 flex flex-col items-center justify-center"
-                style={{ borderColor: '#c47d2e', background: '#fff8f0' }}>
-                <p className="food-display text-4xl font-bold" style={{ color: '#2d1e0e' }}>{filteredSpots.length}</p>
-                <p className="text-[10px] uppercase tracking-widest font-medium mt-1" style={{ color: '#aaa' }}>Spots</p>
+            <div style={{ display: "flex", justifyContent: "flex-end", paddingBottom: 8 }}>
+              <div style={{ width: 140, height: 140, borderRadius: "50%", border: "3px solid #C4622D", background: "#FAF7F2", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+                <div className="bk-display" style={{ fontSize: 44, fontWeight: 900, color: "#1A1208", lineHeight: 1 }}>{filteredSpots.length}</div>
+                <div className="bk-mono" style={{ fontSize: 9, color: "#7A6E61", letterSpacing: "0.2em", textTransform: "uppercase", marginTop: 4 }}>Spots</div>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Filter bar */}
-      <div className="border-b sticky top-0 z-20 px-6 md:px-12 py-4" style={{ background: '#faf6f0', borderColor: '#e0d8cc' }}>
-        <div className="max-w-7xl mx-auto flex flex-wrap items-center gap-3">
-          <div className="relative flex-1 min-w-[180px] max-w-sm">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: '#aaa' }} />
-            <input type="text" placeholder="Search food spots..."
-              value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 text-sm font-medium" />
+        {/* Filter bar */}
+        <div style={{ position: "sticky", top: 72, zIndex: 20, background: "rgba(245,240,232,0.96)", backdropFilter: "blur(10px)", borderBottom: "1px solid #DDD6C8", padding: "12px 2rem" }}>
+          <div style={{ maxWidth: 1280, margin: "0 auto" }}>
+            <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8 }}>
+              <div style={{ flex: 1, minWidth: 180, maxWidth: 320, position: "relative" }}>
+                <Search style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", width: 15, height: 15, color: "#7A6E61" }} />
+                <input type="text" placeholder="Search food spots…" value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+                  style={{ width: "100%", paddingLeft: 40, paddingRight: 14, paddingTop: 10, paddingBottom: 10, background: "#fff", border: "1px solid #DDD6C8", borderRadius: 2, fontSize: 14, color: "#1A1208", outline: "none" }} />
+              </div>
+
+              {filters.map(f => (
+                <button key={f.id} onClick={() => setActiveFilter(f.id)}
+                  style={{
+                    padding: "8px 14px", borderRadius: 2, fontSize: 13, fontWeight: 600, cursor: "pointer",
+                    background: activeFilter === f.id ? "#C4622D" : "transparent",
+                    color: activeFilter === f.id ? "#fff" : "#7A6E61",
+                    border: activeFilter === f.id ? "1px solid #C4622D" : "1px solid #DDD6C8",
+                    transition: "all 0.15s",
+                  }}>
+                  {f.label}
+                </button>
+              ))}
+
+              <select value={sortBy} onChange={e => setSortBy(e.target.value as any)}
+                style={{ padding: "9px 12px", background: "#fff", border: "1px solid #DDD6C8", borderRadius: 2, fontSize: 13, color: "#1A1208", outline: "none", marginLeft: "auto" }}>
+                <option value="rating">Top Rated</option>
+                <option value="price">Price: Low–High</option>
+                <option value="name">A–Z</option>
+              </select>
+
+              {(searchQuery || activeFilter !== "all" || cuisineTypes.length > 0) && (
+                <button onClick={() => { setSearchQuery(""); setActiveFilter("all"); setCuisineTypes([]); setSortBy("rating"); }}
+                  style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, fontWeight: 600, color: "#C4622D", background: "transparent", border: "none", cursor: "pointer" }}>
+                  <X style={{ width: 14, height: 14 }} /> Clear
+                </button>
+              )}
+            </div>
+
+            {allCuisineTypes.length > 0 && (
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 10 }}>
+                {allCuisineTypes.map(cuisine => (
+                  <button key={cuisine} onClick={() => setCuisineTypes(prev => prev.includes(cuisine) ? prev.filter(c => c !== cuisine) : [...prev, cuisine])}
+                    style={{
+                      padding: "5px 12px", borderRadius: 2, fontSize: 11, fontWeight: 600, cursor: "pointer",
+                      background: cuisineTypes.includes(cuisine) ? "#1A1208" : "transparent",
+                      color: cuisineTypes.includes(cuisine) ? "#F5F0E8" : "#7A6E61",
+                      border: cuisineTypes.includes(cuisine) ? "1px solid #1A1208" : "1px solid #DDD6C8",
+                      transition: "all 0.15s",
+                    }}>
+                    {cuisine}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
+        </div>
 
-          {filters.map((f) => (
-            <button key={f.id} onClick={() => setActiveFilter(f.id)}
-              className="px-4 py-2 rounded-full text-xs font-semibold border transition-all"
-              style={activeFilter === f.id
-                ? { background: '#c47d2e', color: '#fff', borderColor: '#c47d2e' }
-                : { background: 'transparent', color: '#8a7060', borderColor: '#e0d8cc' }}>
-              {f.label}
-            </button>
-          ))}
-
-          <select value={sortBy} onChange={(e) => setSortBy(e.target.value as any)}
-            className="px-3 py-2.5 text-xs font-medium">
-            <option value="rating">Top Rated</option>
-            <option value="price">Price: Low–High</option>
-            <option value="name">A–Z</option>
-          </select>
-
-          {(searchQuery || activeFilter !== "all" || minRating > 0 || cuisineTypes.length > 0) && (
-            <button onClick={() => { setSearchQuery(""); setActiveFilter("all"); setMinRating(0); setCuisineTypes([]); setSortBy("rating"); }}
-              className="flex items-center gap-1 text-xs font-semibold" style={{ color: '#c47d2e' }}>
-              <X className="w-3.5 h-3.5" /> Clear
-            </button>
+        {/* Grid */}
+        <div style={{ maxWidth: 1280, margin: "0 auto", padding: "48px 2rem 80px" }}>
+          {loading ? (
+            <div style={{ textAlign: "center", padding: "80px 0" }}>
+              <div style={{ width: 36, height: 36, border: "2px solid #C4622D", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto 16px" }} />
+            </div>
+          ) : filteredSpots.length === 0 ? (
+            <div style={{ textAlign: "center", padding: "80px 0" }}>
+              <div className="bk-display" style={{ fontSize: 48, color: "#DDD6C8", marginBottom: 8 }}>Nothing here yet</div>
+              <p style={{ color: "#7A6E61", fontSize: 14 }}>Try different filters</p>
+            </div>
+          ) : (
+            <AnimatePresence mode="popLayout">
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 2 }}>
+                {filteredSpots.map((food, i) => (
+                  <motion.div key={food.id} layout initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} transition={{ delay: i * 0.03 }}
+                    className="food-card" style={{ background: "#fff", border: "1px solid #DDD6C8", overflow: "hidden", cursor: "pointer" }}
+                    onClick={() => setSelectedFood(food as FoodSpot)}>
+                    <div style={{ position: "relative", height: 260, overflow: "hidden" }}>
+                      <img src={food.image} className="food-img" style={{ width: "100%", height: "100%", objectFit: "cover" }} alt={food.name} />
+                      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(26,18,8,0.8) 0%, rgba(26,18,8,0.1) 55%, transparent 100%)" }} />
+                      <div className={`bk-mono ${priceBadgeClass(food.priceRange)}`} style={{ position: "absolute", top: 14, left: 14, padding: "4px 10px", fontSize: 10, fontWeight: 700, letterSpacing: "0.1em" }}>
+                        {food.priceRange}
+                      </div>
+                      <div className="bk-mono" style={{ position: "absolute", top: 14, right: 14, background: "rgba(245,240,232,0.95)", color: "#1A1208", padding: "4px 10px", fontSize: 11, fontWeight: 700, display: "flex", alignItems: "center", gap: 4 }}>
+                        <Star style={{ width: 10, height: 10, fill: "#D4A853", color: "#D4A853" }} /> {food.rating}
+                      </div>
+                      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "20px" }}>
+                        <h3 className="bk-display" style={{ fontSize: 22, fontWeight: 900, color: "#F5F0E8", lineHeight: 1.1, marginBottom: 4 }}>{food.name}</h3>
+                        <p style={{ fontSize: 12, color: "rgba(245,240,232,0.6)", display: "flex", alignItems: "center", gap: 4 }}>
+                          <MapPin style={{ width: 12, height: 12 }} /> {food.location.address}
+                        </p>
+                      </div>
+                    </div>
+                    {/* Bottom strip */}
+                    <div style={{ padding: "14px 18px", display: "flex", alignItems: "center", justifyContent: "space-between", borderTop: "1px solid #DDD6C8" }}>
+                      <div>
+                        <p className="bk-display" style={{ fontSize: 16, fontWeight: 700, color: "#1A1208" }}>{food.name}</p>
+                        <p style={{ fontSize: 11, color: "#7A6E61" }}>{food.location.address}</p>
+                      </div>
+                      <div style={{ width: 36, height: 36, background: "#C4622D", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                        <Utensils style={{ width: 16, height: 16, color: "#fff" }} />
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </AnimatePresence>
           )}
         </div>
 
-        {allCuisineTypes.length > 0 && (
-          <div className="max-w-7xl mx-auto mt-3 flex flex-wrap gap-2">
-            {allCuisineTypes.map(cuisine => (
-              <button key={cuisine} onClick={() => setCuisineTypes(prev => prev.includes(cuisine) ? prev.filter(c => c !== cuisine) : [...prev, cuisine])}
-                className="px-3 py-1 rounded-full text-xs font-medium border transition-all"
-                style={cuisineTypes.includes(cuisine)
-                  ? { background: '#2d1e0e', color: '#faf6f0', borderColor: '#2d1e0e' }
-                  : { background: 'transparent', color: '#8a7060', borderColor: '#e0d8cc' }}>
-                {cuisine}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
+        {/* Modal */}
+        <AnimatePresence>
+          {selectedFood && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: 16, background: "rgba(26,18,8,0.75)", backdropFilter: "blur(12px)" }}
+              onClick={() => setSelectedFood(null)}>
+              <motion.div initial={{ y: 48, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 48, opacity: 0 }}
+                className="modal-scroll" onClick={e => e.stopPropagation()}
+                style={{ background: "#FAF7F2", width: "100%", maxWidth: 500, maxHeight: "92vh", display: "flex", flexDirection: "column", border: "1px solid #DDD6C8", overflow: "hidden", position: "relative" }}>
+                <button onClick={() => setSelectedFood(null)}
+                  style={{ position: "absolute", top: 14, right: 14, width: 34, height: 34, background: "#1A1208", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "#F5F0E8", zIndex: 20 }}>
+                  <X style={{ width: 16, height: 16 }} />
+                </button>
 
-      {/* Grid */}
-      <div className="max-w-7xl mx-auto px-6 md:px-12 py-12">
-        {loading ? (
-          <div className="py-32 flex flex-col items-center gap-4">
-            <div className="w-10 h-10 border-2 border-[#c47d2e] border-t-transparent rounded-full animate-spin" />
-            <p className="text-sm tracking-widest uppercase" style={{ color: '#aaa' }}>Loading...</p>
-          </div>
-        ) : (
-          <AnimatePresence mode="popLayout">
-            {filteredSpots.length === 0 ? (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-24 text-center">
-                <p className="food-display text-5xl font-bold mb-3" style={{ color: '#e0d8cc' }}>Nothing here yet</p>
-                <p className="text-sm" style={{ color: '#aaa' }}>Try different filters</p>
-              </motion.div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {filteredSpots.map((food, i) => {
-                  const pColor = priceColors[food.priceRange] || '#888';
-                  return (
-                    <motion.div
-                      key={food.id} layout
-                      initial={{ opacity: 0, scale: 0.95 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.95 }}
-                      transition={{ delay: i * 0.03 }}
-                      className="food-card cursor-pointer rounded-3xl overflow-hidden border"
-                      style={{ background: '#fff', borderColor: '#ede8df' }}
-                      onClick={() => setSelectedFood(food as FoodSpot)}
-                    >
-                      <div className="relative overflow-hidden" style={{ height: '280px' }}>
-                        <img src={food.image} className="food-img w-full h-full object-cover" alt={food.name} />
-                        <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(45,30,14,0.85) 0%, rgba(45,30,14,0.2) 50%, transparent 100%)' }} />
+                <div style={{ height: 200, flexShrink: 0, position: "relative" }}>
+                  <img src={selectedFood.image} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="" />
+                  <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, #FAF7F2, transparent 60%)" }} />
+                </div>
 
-                        <div className="absolute top-5 left-5">
-                          <span className={`price-badge-${food.priceRange} text-[11px] font-bold tracking-widest px-3 py-1.5 rounded-full`}>
-                            {food.priceRange}
-                          </span>
-                        </div>
-                        <div className="absolute top-5 right-5 flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold"
-                          style={{ background: 'rgba(255,255,255,0.95)', color: '#2d1e0e' }}>
-                          <Star className="w-3.5 h-3.5" style={{ fill: '#f59e0b', color: '#f59e0b' }} /> {food.rating}
-                        </div>
+                <div style={{ padding: "0 28px 8px", position: "relative", zIndex: 5 }}>
+                  <h2 className="bk-display" style={{ fontSize: 32, fontWeight: 900, color: "#1A1208", lineHeight: 1.1, marginBottom: 4 }}>{selectedFood.name}</h2>
+                  <p style={{ fontSize: 13, color: "#7A6E61", display: "flex", alignItems: "center", gap: 4 }}>
+                    <MapPin style={{ width: 13, height: 13, color: "#C4622D" }} /> {selectedFood.location.address}
+                  </p>
+                </div>
 
-                        <div className="absolute bottom-0 left-0 right-0 p-6">
-                          <div className="food-reveal">
-                            <h3 className="food-display text-2xl font-bold text-white leading-tight mb-1">{food.name}</h3>
-                            <p className="text-xs text-white/70 flex items-center gap-1">
-                              <MapPin className="w-3.5 h-3.5" /> {food.location.address}
-                            </p>
-                          </div>
-                          <div className="mt-4 py-3 rounded-2xl font-bold text-sm flex items-center justify-center gap-2"
-                            style={{ background: '#c47d2e', color: '#fff', opacity: 0, transition: 'opacity 0.3s' }}
-                            onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')}
-                            onMouseLeave={(e) => (e.currentTarget.style.opacity = '0')}>
-                            <Utensils className="w-4 h-4" /> View Menu
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Always-visible bottom band */}
-                      <div className="px-6 py-4 flex items-center justify-between border-t" style={{ borderColor: '#f0ead8' }}>
-                        <div>
-                          <p className="food-display text-lg font-semibold" style={{ color: '#2d1e0e' }}>{food.name}</p>
-                          <p className="text-xs" style={{ color: '#b4a090' }}>{food.location.address}</p>
-                        </div>
-                        <div className="w-9 h-9 rounded-xl flex items-center justify-center"
-                          style={{ background: '#c47d2e', color: '#fff' }}>
-                          <Utensils className="w-4 h-4" />
-                        </div>
-                      </div>
-                    </motion.div>
-                  );
-                })}
-              </div>
-            )}
-          </AnimatePresence>
-        )}
-      </div>
-
-      {/* Modal */}
-      <AnimatePresence>
-        {selectedFood && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4"
-            style={{ background: 'rgba(45,30,14,0.7)', backdropFilter: 'blur(16px)' }}
-            onClick={() => setSelectedFood(null)}>
-            <motion.div initial={{ y: 60, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 60, opacity: 0 }}
-              className="modal-scroll w-full max-w-lg rounded-3xl overflow-hidden border relative flex flex-col"
-              style={{ background: '#faf6f0', borderColor: '#e0d8cc', maxHeight: '92vh' }}
-              onClick={(e) => e.stopPropagation()}>
-              <button onClick={() => setSelectedFood(null)}
-                className="absolute top-5 right-5 z-20 w-9 h-9 rounded-full flex items-center justify-center"
-                style={{ background: '#2d1e0e', color: '#faf6f0' }}>
-                <X className="w-5 h-5" />
-              </button>
-
-              <div className="relative shrink-0" style={{ height: '220px' }}>
-                <img src={selectedFood.image} className="w-full h-full object-cover" alt={selectedFood.name} />
-                <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, #faf6f0, transparent 60%)' }} />
-              </div>
-
-              <div className="px-8 -mt-6 relative z-10">
-                <h2 className="food-display text-4xl font-bold leading-tight mb-1" style={{ color: '#2d1e0e' }}>{selectedFood.name}</h2>
-                <p className="text-sm flex items-center gap-1.5" style={{ color: '#8a7060' }}>
-                  <MapPin className="w-4 h-4" style={{ color: '#c47d2e' }} /> {selectedFood.location.address}
-                </p>
-              </div>
-
-              <div className="flex-1 overflow-y-auto modal-scroll px-8 py-6 space-y-6">
-                {booked ? (
-                  <div className="py-12 text-center">
-                    <CheckCircle2 className="w-14 h-14 mx-auto mb-4" style={{ color: '#22c55e' }} />
-                    <h3 className="food-display text-2xl font-bold mb-2" style={{ color: '#2d1e0e' }}>Reservation Sent!</h3>
-                    <p className="text-sm" style={{ color: '#8a7060' }}>We've received your request for {selectedFood.name}.</p>
-                  </div>
-                ) : (
-                  <>
-                    <div className="flex justify-between items-center py-4 border-y" style={{ borderColor: '#e0d8cc' }}>
-                      <div>
-                        <p className="text-[10px] uppercase tracking-widest font-semibold mb-2" style={{ color: '#aaa' }}>Price Range</p>
-                        <span className={`price-badge-${selectedFood.priceRange} text-xs font-bold px-4 py-1.5 rounded-full`}>
-                          {selectedFood.priceRange}
-                        </span>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-[10px] uppercase tracking-widest font-semibold mb-2" style={{ color: '#aaa' }}>Rating</p>
-                        <p className="food-display text-3xl font-bold" style={{ color: '#2d1e0e' }}>★ {selectedFood.rating}</p>
-                      </div>
+                <div className="modal-scroll" style={{ flex: 1, overflowY: "auto", padding: "20px 28px 28px" }}>
+                  {booked ? (
+                    <div style={{ textAlign: "center", padding: "40px 0" }}>
+                      <CheckCircle2 style={{ width: 52, height: 52, color: "#4A7C59", margin: "0 auto 16px" }} />
+                      <h3 className="bk-display" style={{ fontSize: 26, fontWeight: 700, color: "#1A1208", marginBottom: 6 }}>Reservation Sent!</h3>
+                      <p style={{ color: "#7A6E61", fontSize: 14 }}>We've received your request for {selectedFood.name}.</p>
                     </div>
+                  ) : (
+                    <>
+                      <div style={{ display: "flex", justifyContent: "space-between", paddingBottom: 16, marginBottom: 16, borderBottom: "1px solid #DDD6C8" }}>
+                        <div>
+                          <div className="bk-mono" style={{ fontSize: 9, color: "#7A6E61", letterSpacing: "0.2em", textTransform: "uppercase", marginBottom: 6 }}>Price Range</div>
+                          <span className={priceBadgeClass(selectedFood.priceRange)} style={{ padding: "4px 14px", fontSize: 12, fontWeight: 700 }}>{selectedFood.priceRange}</span>
+                        </div>
+                        <div style={{ textAlign: "right" }}>
+                          <div className="bk-mono" style={{ fontSize: 9, color: "#7A6E61", letterSpacing: "0.2em", textTransform: "uppercase", marginBottom: 4 }}>Rating</div>
+                          <div className="bk-display" style={{ fontSize: 28, fontWeight: 900, color: "#1A1208" }}>★ {selectedFood.rating}</div>
+                        </div>
+                      </div>
 
-                    <div>
-                      <p className="text-[10px] uppercase tracking-widest font-semibold mb-3" style={{ color: '#aaa' }}>Menu Highlights</p>
-                      <div className="space-y-2">
+                      <div className="bk-mono" style={{ fontSize: 9, color: "#7A6E61", letterSpacing: "0.2em", textTransform: "uppercase", marginBottom: 12 }}>Menu Highlights</div>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 20 }}>
                         {selectedFood.menu?.map((item: any, idx: number) => (
-                          <motion.div key={idx} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.06 }}
-                            className="flex justify-between items-center p-4 rounded-2xl border"
-                            style={{ background: '#fff', borderColor: '#ede8df' }}>
+                          <motion.div key={idx} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.05 }}
+                            style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 16px", background: "#fff", border: "1px solid #DDD6C8" }}>
                             <div>
-                              <p className="font-semibold text-sm" style={{ color: '#2d1e0e' }}>{item.name}</p>
-                              {item.category && <p className="text-[10px] uppercase tracking-wider mt-0.5" style={{ color: '#bbb' }}>{item.category}</p>}
+                              <p style={{ fontWeight: 600, fontSize: 14, color: "#1A1208" }}>{item.name}</p>
+                              {item.category && <p className="bk-mono" style={{ fontSize: 9, color: "#7A6E61", textTransform: "uppercase", letterSpacing: "0.15em", marginTop: 2 }}>{item.category}</p>}
                             </div>
-                            <span className="font-bold text-base" style={{ color: '#c47d2e' }}>{item.price}</span>
+                            <span className="bk-display" style={{ fontSize: 18, fontWeight: 700, color: "#C4622D" }}>{item.price}</span>
                           </motion.div>
                         ))}
                       </div>
-                    </div>
 
-                    <div className="flex flex-col gap-3 pb-4">
-                      <button onClick={handleReserve} disabled={isBooking}
-                        className="w-full py-4 rounded-2xl font-bold text-sm flex items-center justify-center gap-2"
-                        style={{ background: '#c47d2e', color: '#fff' }}>
-                        {isBooking ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                          : <><Calendar className="w-4 h-4" /> Reserve a Table</>}
-                      </button>
-                      <a href={`https://www.google.com/maps/dir/?api=1&destination=${selectedFood.location.lat},${selectedFood.location.lng}`}
-                        target="_blank" rel="noreferrer"
-                        className="w-full py-4 rounded-2xl font-bold text-sm flex items-center justify-center gap-2"
-                        style={{ background: '#2d1e0e', color: '#faf6f0' }}>
-                        <Navigation className="w-4 h-4" /> Get Directions
-                      </a>
-                    </div>
-                  </>
-                )}
-              </div>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                        <button onClick={handleReserve} disabled={isBooking}
+                          style={{ width: "100%", padding: "14px", background: "#C4622D", color: "#fff", border: "none", fontSize: 14, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                          {isBooking ? <div style={{ width: 18, height: 18, border: "2px solid rgba(255,255,255,0.4)", borderTopColor: "#fff", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+                            : <><Calendar style={{ width: 15, height: 15 }} /> Reserve a Table</>}
+                        </button>
+                        <a href={`https://www.google.com/maps/dir/?api=1&destination=${selectedFood.location.lat},${selectedFood.location.lng}`}
+                          target="_blank" rel="noreferrer"
+                          style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, width: "100%", padding: "14px", background: "#1A1208", color: "#F5F0E8", textDecoration: "none", fontWeight: 700, fontSize: 14 }}>
+                          <Navigation style={{ width: 15, height: 15 }} /> Get Directions
+                        </a>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </motion.div>
             </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+          )}
+        </AnimatePresence>
+      </div>
+    </>
   );
 }
