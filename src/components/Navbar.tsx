@@ -1,157 +1,87 @@
-import { useState, useEffect } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
-import { auth } from "../lib/firebase";
-import { onAuthStateChanged, signOut } from "firebase/auth";
-import { Menu, X, User, MapPin, Sparkles, Utensils, Calendar, LogOut, Settings } from "lucide-react";
-import { cn } from "../lib/utils";
-import { motion, AnimatePresence } from "motion/react";
-
-import { useFirebase } from "../contexts/FirebaseContext";
-
-export default function Navbar() {
-  const { user, isAdmin } = useFirebase();
-  const [isOpen, setIsOpen] = useState(false);
-  const navigate = useNavigate();
-  const location = useLocation();
-
-  const handleLogout = async () => {
-    await signOut(auth);
-    navigate("/");
-  };
-
-  const navLinks = [
-    { name: "Explore", path: "/explore", icon: MapPin },
-    { name: "Eat Local", path: "/food", icon: Utensils },
-    { name: "Guides", path: "/guides", icon: User },
-    { name: "Events", path: "/events", icon: Calendar },
-    { name: "AI Plan", path: "/ai-itinerary", icon: Sparkles },
+// ─── PAGE: NAVBAR ─────────────────────────────────────────────
+const Navbar = ({ currentPage, setCurrentPage, user, onLogout }) => {
+  const [open, setOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+ 
+  const links = [
+    { name: "Explore", page: "explore" },
+    { name: "Food",    page: "food"    },
+    { name: "Guides",  page: "guides"  },
+    { name: "Events",  page: "events"  },
+    { name: "AI Plan", page: "ai"      },
   ];
-
+ 
   return (
-    <nav className="fixed top-0 w-full z-50 bg-white/90 backdrop-blur-md border-b border-clay">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16 items-center">
-          <Link to="/" className="flex items-center gap-3">
-            <img src="/img/BukidGO/BukidGO.png" alt="BukidGo" className="h-10 w-auto" />
-            <span className="text-2xl font-serif font-bold text-forest tracking-tighter">BukidGo</span>
-          </Link>
-
-          {/* Desktop Nav */}
-          <div className="hidden md:flex items-center gap-8">
-            {navLinks.map((link) => (
-              <Link
-                key={link.path}
-                to={link.path}
-                className={cn(
-                  "text-sm font-medium tracking-wide transition-colors hover:text-earth flex items-center gap-1.5",
-                  location.pathname === link.path ? "text-forest border-b-2 border-forest pb-1" : "text-stone"
-                )}
-              >
-                <link.icon className="w-4 h-4" />
-                {link.name}
-              </Link>
-            ))}
-            
-            {isAdmin && (
-              <Link
-                to="/admin"
-                className={cn(
-                  "text-sm font-bold tracking-wide transition-colors hover:text-earth flex items-center gap-1.5 bg-earth/10 text-earth px-3 py-1.5 rounded-lg border border-earth/20",
-                  location.pathname === "/admin" ? "bg-earth text-white" : ""
-                )}
-              >
-                <Settings className="w-4 h-4" />
-                Admin
-              </Link>
-            )}
-            
-            {user ? (
-              <div className="flex items-center gap-4">
-                <Link to="/profile" className="w-8 h-8 bg-clay rounded-full flex items-center justify-center hover:bg-stone/10 transition-colors">
-                  <User className="w-4 h-4 text-stone" />
-                </Link>
-                <button onClick={handleLogout} className="text-stone/40 hover:text-earth transition-colors">
-                  <LogOut className="w-4 h-4" />
-                </button>
-              </div>
-            ) : (
-              <Link
-                to="/auth"
-                className="bg-earth text-white px-5 py-2 rounded-full text-sm font-semibold hover:bg-earth/90 transition-all shadow-md shadow-earth/20"
-              >
-                Sign In
-              </Link>
-            )}
+    <nav style={{
+      position: "fixed", top: 0, left: 0, right: 0, zIndex: 100,
+      background: "rgba(247,240,230,0.92)",
+      backdropFilter: "blur(20px)",
+      borderBottom: "1px solid rgba(61,107,79,0.1)",
+      padding: "0 32px",
+    }}>
+      <div style={{ maxWidth: 1280, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", height: 68 }}>
+        {/* Logo */}
+        <button onClick={() => setCurrentPage("home")} style={{ display: "flex", alignItems: "center", gap: 10, background: "none", border: "none", cursor: "pointer" }}>
+          <div style={{ width: 38, height: 38, background: T.jungle, borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <Icon name="map" size={18} color={T.gold} />
           </div>
-
-          {/* Mobile menu button */}
-          <div className="md:hidden flex items-center">
-            <button
-              onClick={() => setIsOpen(!isOpen)}
-              className="text-gray-600 p-2"
-            >
-              {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          <span className="display" style={{ fontSize: 22, fontWeight: 700, color: T.jungle, letterSpacing: "-0.02em" }}>BukidGo</span>
+        </button>
+ 
+        {/* Desktop links */}
+        <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+          {links.map(l => (
+            <button key={l.page} onClick={() => setCurrentPage(l.page)} style={{
+              background: currentPage === l.page ? "rgba(61,107,79,0.1)" : "none",
+              border: "none",
+              padding: "8px 16px",
+              borderRadius: 10,
+              fontFamily: "var(--ff-body)",
+              fontSize: 14,
+              fontWeight: currentPage === l.page ? 600 : 400,
+              color: currentPage === l.page ? T.moss : T.stone,
+              cursor: "pointer",
+              transition: "all 0.2s",
+            }}>
+              {l.name}
             </button>
-          </div>
+          ))}
+          {user?.isAdmin && (
+            <button onClick={() => setCurrentPage("admin")} style={{
+              background: T.amber, color: "white", border: "none",
+              padding: "7px 14px", borderRadius: 10,
+              fontFamily: "var(--ff-body)", fontSize: 13, fontWeight: 600,
+              cursor: "pointer", marginLeft: 4
+            }}>
+              Admin
+            </button>
+          )}
+        </div>
+ 
+        {/* Auth */}
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          {user ? (
+            <>
+              <button onClick={() => setCurrentPage("profile")} style={{
+                width: 38, height: 38, borderRadius: 10,
+                background: T.mist, border: "1.5px solid rgba(61,107,79,0.15)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                cursor: "pointer"
+              }}>
+                <Icon name="user" size={16} color={T.moss} />
+              </button>
+              <button onClick={onLogout} className="btn-ghost" style={{ padding: "8px 14px", fontSize: 13 }}>
+                <Icon name="logout" size={14} />
+                Out
+              </button>
+            </>
+          ) : (
+            <button className="btn-primary" onClick={() => setCurrentPage("auth")} style={{ padding: "9px 22px" }}>
+              Sign In
+            </button>
+          )}
         </div>
       </div>
-
-      {/* Mobile Nav */}
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="md:hidden bg-white border-b border-clay overflow-hidden"
-          >
-            <div className="px-4 py-6 space-y-4">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.path}
-                  to={link.path}
-                  onClick={() => setIsOpen(false)}
-                  className="flex items-center gap-3 text-stone font-medium"
-                >
-                  <link.icon className="w-5 h-5 text-forest" />
-                  {link.name}
-                </Link>
-              ))}
-              {isAdmin && (
-                <Link
-                  to="/admin"
-                  onClick={() => setIsOpen(false)}
-                  className="flex items-center gap-3 text-earth font-bold bg-earth/10 px-3 py-2 rounded-lg"
-                >
-                  <Settings className="w-5 h-5 text-earth" />
-                  Admin Dashboard
-                </Link>
-              )}
-              <hr className="border-clay" />
-              {user ? (
-                <>
-                  <Link to="/profile" onClick={() => setIsOpen(false)} className="flex items-center gap-3 text-stone font-medium">
-                    <User className="w-5 h-5 text-forest" />
-                    My Profile
-                  </Link>
-                  <button onClick={handleLogout} className="flex items-center gap-3 text-earth font-medium w-full text-left">
-                    <LogOut className="w-5 h-5" />
-                    Logout
-                  </button>
-                </>
-              ) : (
-                <Link
-                  to="/auth"
-                  onClick={() => setIsOpen(false)}
-                  className="block w-full bg-earth text-white text-center py-3 rounded-xl font-medium"
-                >
-                  Sign In
-                </Link>
-              )}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </nav>
   );
-}
+};

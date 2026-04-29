@@ -24,64 +24,42 @@ export default function Guides() {
 
   useEffect(() => {
     return onSnapshot(collection(db, "guides"), (snapshot) => {
-      if (!snapshot.empty) {
-        setLiveGuides(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-      }
+      if (!snapshot.empty) setLiveGuides(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     });
   }, []);
 
   const allSpecialties = useMemo(() => {
-    const specialtiesSet = new Set<string>();
-    liveGuides.forEach(buddy => {
-      if (buddy.specialties) {
-        buddy.specialties.forEach((spec: string) => specialtiesSet.add(spec));
-      }
-    });
-    return Array.from(specialtiesSet);
+    const s = new Set<string>();
+    liveGuides.forEach(b => { if (b.specialties) b.specialties.forEach((sp: string) => s.add(sp)); });
+    return Array.from(s);
   }, [liveGuides]);
 
   const filteredBuddies = useMemo(() => {
     return (liveGuides || []).filter(buddy => {
-      const matchesSearch = buddy.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      const matchesSearch = buddy.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           buddy.bio.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          (buddy.specialties && buddy.specialties.some((spec: string) => 
-                            spec.toLowerCase().includes(searchQuery.toLowerCase())
-                          ));
+                          (buddy.specialties && buddy.specialties.some((s: string) => s.toLowerCase().includes(searchQuery.toLowerCase())));
       const years = parseInt(buddy.experience) || 0;
       const matchesExp = years >= minExperience;
       const matchesPrice = (buddy.pricePerDay || 0) <= maxPrice;
       const matchesRating = buddy.rating >= minRating;
-      const matchesSpecialties = specialties.length === 0 || 
-        (buddy.specialties && buddy.specialties.some((spec: string) => specialties.includes(spec)));
-      
+      const matchesSpecialties = specialties.length === 0 ||
+        (buddy.specialties && buddy.specialties.some((s: string) => specialties.includes(s)));
       return matchesSearch && matchesExp && matchesPrice && matchesRating && matchesSpecialties;
     });
   }, [liveGuides, searchQuery, minExperience, maxPrice, minRating, specialties]);
 
   const handleBook = async () => {
-    if (!user) {
-      navigate('/auth');
-      return;
-    }
-
+    if (!user) { navigate('/auth'); return; }
     setIsBooking(true);
     try {
       await addDoc(collection(db, "bookings"), {
-        userId: user.uid,
-        userName: user.displayName || "User",
-        userEmail: user.email,
-        buddyId: selectedBuddy.uid,
-        buddyName: selectedBuddy.name,
-        date: new Date().toISOString(),
-        status: "pending",
-        createdAt: serverTimestamp(),
-        type: "buddy"
+        userId: user.uid, userName: user.displayName || "User", userEmail: user.email,
+        buddyId: selectedBuddy.uid, buddyName: selectedBuddy.name,
+        date: new Date().toISOString(), status: "pending", createdAt: serverTimestamp(), type: "buddy"
       });
       setBooked(true);
-      setTimeout(() => {
-        setBooked(false);
-        setSelectedBuddy(null);
-      }, 3000);
+      setTimeout(() => { setBooked(false); setSelectedBuddy(null); }, 3000);
     } catch (error) {
       handleFirestoreError(error, OperationType.WRITE, "bookings");
     } finally {
@@ -90,416 +68,291 @@ export default function Guides() {
   };
 
   const toggleSpecialty = (specialty: string) => {
-    setSpecialties(prev => 
-      prev.includes(specialty) 
-        ? prev.filter(s => s !== specialty)
-        : [...prev, specialty]
-    );
+    setSpecialties(prev => prev.includes(specialty) ? prev.filter(s => s !== specialty) : [...prev, specialty]);
   };
 
+  const ratingBadge = (r: number) => r >= 4.8 ? { label: "Elite", bg: '#7c3aed', color: '#fff' } : r >= 4.5 ? { label: "Top Rated", bg: '#0ea5e9', color: '#fff' } : { label: "Verified", bg: '#16a34a', color: '#fff' };
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      {/* Hero Section */}
-      <div className="relative rounded-[4rem] overflow-hidden mb-16 bg-gradient-to-br from-forest/90 to-earth/90 p-12">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full blur-[120px] -mr-48 -mt-48" />
-        <div className="relative z-10">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center">
-              <Users className="w-8 h-8 text-white" />
-            </div>
-            <span className="text-white/80 font-black uppercase tracking-[0.3em] text-sm">Local Experts</span>
-          </div>
-          <h1 className="text-6xl md:text-7xl font-serif font-bold text-white mb-6 leading-tight">
-            Meet Your <br />
-            <span className="text-linen underline decoration-white/30">Bukidnon Buddies</span>
-          </h1>
-          <p className="text-white/60 text-xl max-w-2xl leading-relaxed">
-            Connect with verified local guides who know Bukidnon's hidden gems, secret trails, and authentic experiences.
+    <div className="min-h-screen" style={{ background: '#f7f5f2', fontFamily: "'DM Sans', sans-serif" }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Cabinet+Grotesk:wght@400;500;700;800;900&family=DM+Sans:wght@300;400;500&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,700;1,400&display=swap');
+        .guides-display { font-family: 'Fraunces', serif; }
+        .guides-sans { font-family: 'DM Sans', sans-serif; }
+        .guide-card { transition: all 0.25s ease; cursor: pointer; }
+        .guide-card:hover { box-shadow: 0 12px 40px rgba(0,0,0,0.1); transform: translateY(-2px); }
+        .guide-card.selected { border-color: #2563eb !important; box-shadow: 0 0 0 3px rgba(37,99,235,0.15); }
+        .guide-photo { transition: transform 0.4s ease; }
+        .guide-card:hover .guide-photo { transform: scale(1.05); }
+        .detail-enter { animation: slideIn 0.3s ease; }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(16px); } to { opacity: 1; transform: translateX(0); } }
+        input, select { background: #eeeae4 !important; border: 1.5px solid #ddd8d0 !important; color: #1a1a1a !important; }
+        input::placeholder { color: #aaa !important; }
+        input:focus, select:focus { border-color: #2563eb !important; outline: none !important; box-shadow: none !important; }
+        select option { background: #f7f5f2; }
+        input[type="range"] { accent-color: #2563eb; }
+        .scroll-area::-webkit-scrollbar { width: 4px; }
+        .scroll-area::-webkit-scrollbar-thumb { background: #ddd8d0; border-radius: 99px; }
+      `}</style>
+
+      {/* Hero */}
+      <div className="px-6 md:px-12 pt-16 pb-14 border-b" style={{ borderColor: '#ddd8d0', background: '#fff' }}>
+        <div className="max-w-7xl mx-auto">
+          <p className="text-[11px] font-semibold tracking-[0.35em] uppercase mb-5 flex items-center gap-2" style={{ color: '#2563eb' }}>
+            <Users className="w-4 h-4" /> Local Experts · Bukidnon
           </p>
+          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8">
+            <div>
+              <h1 className="guides-display font-bold leading-[0.9] mb-5" style={{ fontSize: 'clamp(3rem,7vw,6.5rem)', color: '#111' }}>
+                Meet Your<br />
+                <em style={{ color: '#2563eb' }}>Bukidnon</em> Buddies
+              </h1>
+              <p className="text-lg max-w-xl leading-relaxed font-light" style={{ color: '#666' }}>
+                Verified local guides who know every hidden gem, secret trail, and authentic experience.
+              </p>
+            </div>
+            <div className="flex gap-8 shrink-0 pb-2">
+              {[
+                { label: "Guides", value: liveGuides.length },
+                { label: "Available", value: filteredBuddies.length }
+              ].map((s, i) => (
+                <div key={i} className="text-right">
+                  <p className="guides-display text-5xl font-bold" style={{ color: i === 1 ? '#2563eb' : '#111' }}>{s.value}</p>
+                  <p className="text-[11px] tracking-widest uppercase" style={{ color: '#aaa' }}>{s.label}</p>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Enhanced Filters */}
-      <div className="mb-12 bg-white rounded-[3rem] p-8 border border-clay shadow-lg">
-        <div className="flex flex-col lg:flex-row gap-8">
-          {/* Search */}
-          <div className="flex-1">
-            <div className="relative group">
-              <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-stone/40 group-focus-within:text-earth transition-colors" />
-              <input 
-                type="text"
-                placeholder="Search by name, bio, or specialty..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-14 pr-6 py-5 bg-linen border border-clay rounded-[2rem] focus:ring-2 focus:ring-earth outline-none transition-all font-medium text-stone placeholder:text-stone/30"
-              />
-            </div>
+      {/* Filter bar */}
+      <div className="px-6 md:px-12 py-4 border-b sticky top-0 z-20" style={{ background: '#f7f5f2', borderColor: '#ddd8d0' }}>
+        <div className="max-w-7xl mx-auto flex flex-wrap items-center gap-3">
+          <div className="relative flex-1 min-w-[200px] max-w-sm">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: '#aaa' }} />
+            <input type="text" placeholder="Search by name or specialty..."
+              value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2.5 rounded-xl text-sm font-medium" />
           </div>
-
-          {/* Filter Controls */}
-          <div className="flex flex-wrap gap-4">
-            {/* Experience Filter */}
-            <div className="space-y-2 min-w-[180px]">
-              <label className="text-xs font-black uppercase tracking-widest text-stone/30 flex items-center gap-2">
-                <Briefcase className="w-3 h-3" /> Experience
-              </label>
-              <select 
-                value={minExperience}
-                onChange={(e) => setMinExperience(Number(e.target.value))}
-                className="w-full bg-white border border-clay rounded-2xl px-4 py-3 text-sm font-bold text-stone focus:ring-2 focus:ring-earth outline-none"
-              >
-                <option value={0}>Any Experience</option>
-                <option value={1}>1+ Year</option>
-                <option value={3}>3+ Years</option>
-                <option value={5}>5+ Years</option>
-                <option value={7}>7+ Years</option>
-              </select>
-            </div>
-            
-            {/* Rating Filter */}
-            <div className="space-y-2 min-w-[180px]">
-              <label className="text-xs font-black uppercase tracking-widest text-stone/30 flex items-center gap-2">
-                <Star className="w-3 h-3" /> Min Rating
-              </label>
-              <select 
-                value={minRating}
-                onChange={(e) => setMinRating(Number(e.target.value))}
-                className="w-full bg-white border border-clay rounded-2xl px-4 py-3 text-sm font-bold text-stone focus:ring-2 focus:ring-earth outline-none"
-              >
-                <option value={0}>Any Rating</option>
-                <option value={4.0}>4.0+ Stars</option>
-                <option value={4.5}>4.5+ Stars</option>
-                <option value={4.8}>4.8+ Stars</option>
-              </select>
-            </div>
-
-            {/* Price Filter */}
-            <div className="space-y-2 min-w-[200px]">
-              <label className="text-xs font-black uppercase tracking-widest text-stone/30 flex items-center gap-2">
-                <DollarSign className="w-3 h-3" /> Max Price: ₱{maxPrice}
-              </label>
-              <div className="flex items-center gap-4">
-                <input 
-                  type="range"
-                  min="500"
-                  max="5000"
-                  step="100"
-                  value={maxPrice}
-                  onChange={(e) => setMaxPrice(Number(e.target.value))}
-                  className="flex-1 accent-earth"
-                />
-                <span className="text-sm font-bold text-earth bg-earth/10 px-3 py-1 rounded-full">₱{maxPrice}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Specialties Filter */}
-        {allSpecialties.length > 0 && (
-          <div className="mt-6 pt-6 border-t border-clay/30">
-            <div className="flex items-center gap-3 mb-4">
-              <Compass className="w-5 h-5 text-earth" />
-              <label className="text-xs font-black uppercase tracking-widest text-stone/30">Specialties</label>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {allSpecialties.map(specialty => (
-                <button
-                  key={specialty}
-                  onClick={() => toggleSpecialty(specialty)}
-                  className={cn(
-                    "px-4 py-2 rounded-full text-sm font-bold transition-all border",
-                    specialties.includes(specialty)
-                      ? "bg-earth text-white border-earth shadow-lg shadow-earth/20"
-                      : "bg-white text-stone/60 border-clay hover:border-earth/30"
-                  )}
-                >
-                  {specialty}
-                </button>
-              ))}
-              {specialties.length > 0 && (
-                <button
-                  onClick={() => setSpecialties([])}
-                  className="px-4 py-2 rounded-full text-sm font-bold text-stone/40 hover:text-stone transition-all"
-                >
-                  Clear All
-                </button>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Results Counter */}
-        <div className="mt-6 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-earth/10 rounded-2xl flex items-center justify-center">
-              <Users className="w-5 h-5 text-earth" />
-            </div>
-            <div>
-              <p className="text-xs font-black uppercase tracking-widest text-stone/30">Available Guides</p>
-              <p className="text-2xl font-serif font-bold text-forest">
-                {filteredBuddies.length} <span className="text-stone/40 text-lg">/ {liveGuides.length}</span>
-              </p>
-            </div>
+          <select value={minExperience} onChange={(e) => setMinExperience(Number(e.target.value))}
+            className="px-3 py-2.5 rounded-xl text-xs font-medium">
+            <option value={0}>Any Experience</option>
+            <option value={1}>1+ Year</option>
+            <option value={3}>3+ Years</option>
+            <option value={5}>5+ Years</option>
+          </select>
+          <select value={minRating} onChange={(e) => setMinRating(Number(e.target.value))}
+            className="px-3 py-2.5 rounded-xl text-xs font-medium">
+            <option value={0}>Any Rating</option>
+            <option value={4.0}>4.0+ ★</option>
+            <option value={4.5}>4.5+ ★</option>
+            <option value={4.8}>4.8+ ★</option>
+          </select>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium" style={{ color: '#666' }}>≤ ₱{maxPrice}</span>
+            <input type="range" min="500" max="5000" step="100" value={maxPrice}
+              onChange={(e) => setMaxPrice(Number(e.target.value))} style={{ width: '100px' }} />
           </div>
           {(searchQuery || minExperience > 0 || maxPrice < 5000 || minRating > 0 || specialties.length > 0) && (
-            <button 
-              onClick={() => { 
-                setSearchQuery(""); 
-                setMinExperience(0); 
-                setMaxPrice(5000); 
-                setMinRating(0);
-                setSpecialties([]);
-              }}
-              className="text-earth font-black uppercase tracking-widest text-xs hover:underline flex items-center gap-2"
-            >
-              <X className="w-3 h-3" />
-              Reset All Filters
+            <button onClick={() => { setSearchQuery(""); setMinExperience(0); setMaxPrice(5000); setMinRating(0); setSpecialties([]); }}
+              className="flex items-center gap-1 text-xs font-semibold" style={{ color: '#2563eb' }}>
+              <X className="w-3.5 h-3.5" /> Reset
             </button>
           )}
         </div>
+        {allSpecialties.length > 0 && (
+          <div className="max-w-7xl mx-auto mt-3 flex flex-wrap gap-2">
+            {allSpecialties.map(s => (
+              <button key={s} onClick={() => toggleSpecialty(s)}
+                className="px-3 py-1 rounded-full text-xs font-medium border transition-all"
+                style={specialties.includes(s)
+                  ? { background: '#2563eb', color: '#fff', borderColor: '#2563eb' }
+                  : { background: 'transparent', color: '#666', borderColor: '#ddd8d0' }}>
+                {s}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
-      {/* Main Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-        {/* Guides List */}
-        <div className="space-y-6">
-          {filteredBuddies.length > 0 ? (
-            filteredBuddies.map((buddy) => (
-              <motion.div
-                key={buddy.uid}
-                layout
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                whileHover={{ x: 10 }}
-                onClick={() => setSelectedBuddy(buddy)}
-                className={cn(
-                  "cursor-pointer bg-white p-8 rounded-[3rem] border-2 transition-all flex items-center gap-8 shadow-lg hover:shadow-2xl group",
-                  selectedBuddy?.uid === buddy.uid 
-                    ? "border-earth shadow-xl shadow-earth/20 ring-2 ring-earth/20" 
-                    : "border-clay hover:border-earth/50"
-                )}
-              >
-                <div className="relative">
-                  <img 
-                    src={buddy.photoURL} 
-                    className="w-32 h-32 rounded-[2rem] object-cover shadow-xl group-hover:scale-105 transition-transform duration-300"
-                    alt={buddy.name}
-                  />
-                  <div className="absolute -bottom-2 -right-2 bg-forest text-white p-2 rounded-full border-4 border-white">
-                    <ShieldCheck className="w-4 h-4" />
-                  </div>
-                </div>
-                <div className="flex-1">
-                  <div className="flex justify-between items-start mb-3">
-                    <div>
-                      <h3 className="text-2xl font-serif font-bold text-stone group-hover:text-forest transition-colors">{buddy.name}</h3>
-                      <p className="text-sm text-stone/40 font-bold mb-2 flex items-center gap-2">
-                        <Briefcase className="w-4 h-4" /> {buddy.experience} Experience
+      {/* Main layout */}
+      <div className="max-w-7xl mx-auto px-6 md:px-12 py-10">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-10">
+          {/* Guide list */}
+          <div className="space-y-4">
+            {filteredBuddies.length === 0 ? (
+              <div className="py-20 text-center rounded-3xl border-2 border-dashed" style={{ borderColor: '#ddd8d0' }}>
+                <p className="guides-display text-4xl font-bold mb-2" style={{ color: '#ddd8d0' }}>No guides found</p>
+                <p className="text-sm" style={{ color: '#aaa' }}>Try adjusting your search or filters</p>
+              </div>
+            ) : (
+              filteredBuddies.map((buddy) => {
+                const badge = ratingBadge(buddy.rating);
+                return (
+                  <motion.div key={buddy.uid} layout initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }}
+                    onClick={() => setSelectedBuddy(buddy)}
+                    className={cn("guide-card rounded-3xl border-2 p-6 flex items-center gap-6 bg-white", selectedBuddy?.uid === buddy.uid ? "selected" : "")}
+                    style={{ borderColor: selectedBuddy?.uid === buddy.uid ? '#2563eb' : '#ede9e3' }}>
+                    <div className="relative shrink-0">
+                      <div className="w-20 h-20 rounded-2xl overflow-hidden">
+                        <img src={buddy.photoURL} className="guide-photo w-full h-full object-cover" alt={buddy.name} />
+                      </div>
+                      <div className="absolute -bottom-1.5 -right-1.5 w-7 h-7 rounded-full flex items-center justify-center border-2 border-white"
+                        style={{ background: '#16a34a' }}>
+                        <ShieldCheck className="w-3.5 h-3.5 text-white" />
+                      </div>
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                        <h3 className="guides-display text-xl font-bold" style={{ color: '#111' }}>{buddy.name}</h3>
+                        <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full" style={{ background: badge.bg, color: badge.color }}>
+                          {badge.label}
+                        </span>
+                      </div>
+                      <p className="text-xs mb-2 flex items-center gap-1.5" style={{ color: '#888' }}>
+                        <Briefcase className="w-3.5 h-3.5" /> {buddy.experience} experience
                       </p>
-                    </div>
-                    <div className="flex flex-col items-end gap-1">
-                      <div className="flex items-center gap-1.5 text-sm font-black text-yellow-500 bg-yellow-50 px-3 py-1.5 rounded-full">
-                        <Star className="w-4 h-4 fill-yellow-500" /> {buddy.rating}
-                      </div>
-                      <div className="text-2xl font-serif font-bold text-earth">
-                        ₱{buddy.pricePerDay}<span className="text-sm text-stone/40 font-sans">/day</span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <p className="text-stone/60 mb-4 line-clamp-2">{buddy.bio}</p>
-                  
-                  {buddy.specialties && buddy.specialties.length > 0 && (
-                    <div className="flex flex-wrap gap-2">
-                      {buddy.specialties.slice(0, 3).map((spec: string, idx: number) => (
-                        <span key={idx} className="text-xs font-bold text-forest bg-forest/10 px-3 py-1.5 rounded-full">
-                          {spec}
-                        </span>
-                      ))}
-                      {buddy.specialties.length > 3 && (
-                        <span className="text-xs font-bold text-stone/40 px-3 py-1.5 rounded-full">
-                          +{buddy.specialties.length - 3} more
-                        </span>
+                      <p className="text-sm line-clamp-1 font-light mb-3" style={{ color: '#666' }}>{buddy.bio}</p>
+                      {buddy.specialties && (
+                        <div className="flex flex-wrap gap-1.5">
+                          {buddy.specialties.slice(0, 4).map((s: string, i: number) => (
+                            <span key={i} className="text-[10px] font-semibold px-2.5 py-1 rounded-full"
+                              style={{ background: '#eff6ff', color: '#2563eb' }}>{s}</span>
+                          ))}
+                          {buddy.specialties.length > 4 && (
+                            <span className="text-[10px] font-medium px-2.5 py-1" style={{ color: '#aaa' }}>+{buddy.specialties.length - 4}</span>
+                          )}
+                        </div>
                       )}
                     </div>
-                  )}
-                </div>
-              </motion.div>
-            ))
-          ) : (
-            <div className="py-20 text-center bg-white rounded-[3rem] border-2 border-dashed border-clay">
-              <div className="w-24 h-24 bg-linen rounded-full flex items-center justify-center mx-auto mb-6">
-                <Filter className="w-12 h-12 text-stone/20" />
-              </div>
-              <h3 className="text-2xl font-serif font-bold text-stone mb-4">No Guides Found</h3>
-              <p className="text-stone/40 mb-6 max-w-md mx-auto">
-                Try adjusting your filters or search terms to find the perfect local buddy.
-              </p>
-              <button 
-                onClick={() => { 
-                  setSearchQuery(""); 
-                  setMinExperience(0); 
-                  setMaxPrice(5000); 
-                  setMinRating(0);
-                  setSpecialties([]);
-                }}
-                className="bg-earth text-white px-8 py-3 rounded-2xl font-bold hover:bg-earth/90 transition-all flex items-center gap-2 mx-auto"
-              >
-                <Sparkles className="w-4 h-4" />
-                Reset Filters
-              </button>
-            </div>
-          )}
-        </div>
 
-        {/* Selected Buddy Details */}
-        <div className="lg:sticky lg:top-24 h-fit">
-          <AnimatePresence mode="wait">
-            {booked ? (
-              <motion.div
-                key="success"
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                className="bg-gradient-to-br from-forest to-earth rounded-[3rem] p-12 text-center text-white shadow-2xl relative overflow-hidden"
-              >
-                <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32" />
-                <div className="absolute bottom-0 left-0 w-64 h-64 bg-white/5 rounded-full -ml-32 -mb-32" />
-                <CheckCircle2 className="w-24 h-24 mx-auto mb-8 text-linen animate-bounce" />
-                <h2 className="text-4xl font-serif font-bold mb-4">Booking Confirmed!</h2>
-                <p className="text-linen/80 text-lg mb-8">
-                  Your request has been sent to {selectedBuddy?.name.split(' ')[0]}. You'll receive a confirmation within 24 hours.
-                </p>
-                <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
-                  <p className="text-sm font-bold mb-2">What happens next?</p>
-                  <ul className="text-sm text-linen/60 space-y-2 text-left">
-                    <li className="flex items-center gap-2">✓ Guide will contact you via email</li>
-                    <li className="flex items-center gap-2">✓ Discuss itinerary details</li>
-                    <li className="flex items-center gap-2">✓ Confirm meeting point & time</li>
-                    <li className="flex items-center gap-2">✓ Payment secured through platform</li>
-                  </ul>
-                </div>
-              </motion.div>
-            ) : selectedBuddy ? (
-              <motion.div
-                key="details"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-white rounded-[3rem] p-10 border border-clay shadow-2xl space-y-10 relative overflow-hidden"
-              >
-                {/* Background Elements */}
-                <div className="absolute top-0 right-0 w-48 h-48 bg-earth/5 rounded-full -mr-24 -mt-24" />
-                <div className="absolute bottom-0 left-0 w-48 h-48 bg-forest/5 rounded-full -ml-24 -mb-24" />
-                
-                <div className="relative z-10">
-                  <div className="flex items-center gap-6 mb-8">
-                    <div className="relative">
-                      <img src={selectedBuddy.photoURL} className="w-28 h-28 rounded-2xl object-cover shadow-xl border-4 border-linen" alt="" />
-                      <div className="absolute -bottom-2 -right-2 bg-forest text-white p-2 rounded-full border-4 border-white">
-                        <Award className="w-4 h-4" />
+                    <div className="text-right shrink-0">
+                      <div className="flex items-center justify-end gap-1 mb-1">
+                        <Star className="w-4 h-4" style={{ fill: '#f59e0b', color: '#f59e0b' }} />
+                        <span className="font-bold text-sm" style={{ color: '#111' }}>{buddy.rating}</span>
                       </div>
+                      <p className="guides-display text-2xl font-bold" style={{ color: '#2563eb' }}>₱{buddy.pricePerDay}</p>
+                      <p className="text-[10px]" style={{ color: '#aaa' }}>per day</p>
                     </div>
-                    <div>
-                      <h2 className="text-3xl font-serif font-bold text-stone">{selectedBuddy.name}</h2>
-                      <div className="flex items-center gap-4 mt-3">
-                        <span className="text-sm font-bold text-stone/30 flex items-center gap-1.5 uppercase tracking-widest bg-linen px-4 py-1.5 rounded-full">
-                          <Briefcase className="w-3.5 h-3.5" /> {selectedBuddy.experience}
-                        </span>
-                        <span className="text-sm font-bold text-yellow-500 flex items-center gap-1.5 bg-yellow-50 px-4 py-1.5 rounded-full">
-                          <Star className="w-3.5 h-3.5 fill-yellow-500" /> {selectedBuddy.rating}
-                        </span>
+                  </motion.div>
+                );
+              })
+            )}
+          </div>
+
+          {/* Detail panel */}
+          <div className="lg:sticky lg:top-24 h-fit">
+            <AnimatePresence mode="wait">
+              {booked ? (
+                <motion.div key="success" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}
+                  className="rounded-3xl p-10 text-center text-white relative overflow-hidden"
+                  style={{ background: 'linear-gradient(135deg, #1d4ed8, #2563eb)' }}>
+                  <CheckCircle2 className="w-16 h-16 mx-auto mb-6 animate-bounce" />
+                  <h2 className="guides-display text-3xl font-bold mb-3">Booked!</h2>
+                  <p className="text-blue-100 leading-relaxed">
+                    Your request was sent to {selectedBuddy?.name.split(' ')[0]}. Expect a reply within 24 hours.
+                  </p>
+                </motion.div>
+              ) : selectedBuddy ? (
+                <motion.div key="details" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+                  className="detail-enter rounded-3xl border overflow-hidden"
+                  style={{ background: '#fff', borderColor: '#ede9e3' }}>
+                  {/* Header */}
+                  <div className="p-8 border-b" style={{ borderColor: '#f0ece5' }}>
+                    <div className="flex items-center gap-5">
+                      <div className="relative">
+                        <img src={selectedBuddy.photoURL} className="w-24 h-24 rounded-2xl object-cover" alt="" />
+                        <div className="absolute -bottom-2 -right-2 w-8 h-8 rounded-full flex items-center justify-center border-2 border-white"
+                          style={{ background: '#16a34a' }}>
+                          <Award className="w-4 h-4 text-white" />
+                        </div>
+                      </div>
+                      <div>
+                        <h2 className="guides-display text-2xl font-bold mb-1" style={{ color: '#111' }}>{selectedBuddy.name}</h2>
+                        <div className="flex items-center gap-3">
+                          <span className="text-xs font-medium flex items-center gap-1 px-3 py-1 rounded-full"
+                            style={{ background: '#f0f9ff', color: '#0284c7' }}>
+                            <Briefcase className="w-3 h-3" /> {selectedBuddy.experience}
+                          </span>
+                          <span className="text-xs font-bold flex items-center gap-1 px-3 py-1 rounded-full"
+                            style={{ background: '#fefce8', color: '#a16207' }}>
+                            <Star className="w-3 h-3" /> {selectedBuddy.rating}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>
 
-                  <div className="space-y-6">
+                  {/* Content */}
+                  <div className="scroll-area overflow-y-auto p-8 space-y-6" style={{ maxHeight: '480px' }}>
                     <div>
-                      <h4 className="text-xs font-black uppercase tracking-[0.2em] text-stone/30 mb-3 flex items-center gap-2">
-                        <Compass className="w-4 h-4" /> About {selectedBuddy.name.split(' ')[0]}
-                      </h4>
-                      <p className="text-stone/60 leading-relaxed text-lg">{selectedBuddy.bio}</p>
+                      <p className="text-[10px] uppercase tracking-widest font-semibold mb-2" style={{ color: '#aaa' }}>About</p>
+                      <p className="text-sm leading-relaxed font-light" style={{ color: '#555' }}>{selectedBuddy.bio}</p>
                     </div>
 
                     {selectedBuddy.specialties && selectedBuddy.specialties.length > 0 && (
                       <div>
-                        <h4 className="text-xs font-black uppercase tracking-[0.2em] text-stone/30 mb-3 flex items-center gap-2">
-                          <TrendingUp className="w-4 h-4" /> Specialties
-                        </h4>
+                        <p className="text-[10px] uppercase tracking-widest font-semibold mb-2" style={{ color: '#aaa' }}>Specialties</p>
                         <div className="flex flex-wrap gap-2">
-                          {selectedBuddy.specialties.map((spec: string, idx: number) => (
-                            <span key={idx} className="text-sm font-bold text-forest bg-forest/10 px-4 py-2 rounded-full">
-                              {spec}
-                            </span>
+                          {selectedBuddy.specialties.map((s: string, i: number) => (
+                            <span key={i} className="text-xs font-semibold px-3 py-1.5 rounded-full"
+                              style={{ background: '#eff6ff', color: '#2563eb', border: '1px solid #bfdbfe' }}>{s}</span>
                           ))}
                         </div>
                       </div>
                     )}
 
-                    <div className="bg-gradient-to-r from-linen to-white rounded-[2.5rem] p-8 space-y-4 border border-clay/50">
-                      <div className="flex justify-between items-center">
+                    <div className="rounded-2xl p-5 border" style={{ background: '#f7f5f2', borderColor: '#ede9e3' }}>
+                      <div className="flex justify-between items-center mb-3 pb-3 border-b" style={{ borderColor: '#ede9e3' }}>
                         <div>
-                          <p className="text-sm font-bold text-stone/40 mb-1">Service Fee (per day)</p>
-                          <p className="text-2xl font-serif font-bold text-stone">₱{selectedBuddy.pricePerDay}</p>
+                          <p className="text-[10px] uppercase tracking-widest mb-1" style={{ color: '#aaa' }}>Service / day</p>
+                          <p className="guides-display text-2xl font-bold" style={{ color: '#111' }}>₱{selectedBuddy.pricePerDay}</p>
                         </div>
                         <div className="text-right">
-                          <p className="text-sm font-bold text-stone/40 mb-1">Platform Fee</p>
-                          <p className="text-xl font-serif font-bold text-stone">₱49</p>
+                          <p className="text-[10px] uppercase tracking-widest mb-1" style={{ color: '#aaa' }}>Platform fee</p>
+                          <p className="guides-display text-2xl font-bold" style={{ color: '#111' }}>₱49</p>
                         </div>
                       </div>
-                      <hr className="border-clay/30" />
-                      <div className="flex justify-between items-center pt-2">
-                        <div>
-                          <p className="text-xs font-black uppercase tracking-widest text-stone/30">Total Estimate</p>
-                          <p className="text-sm text-stone/40">Includes taxes & service charges</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-4xl font-serif font-bold text-earth">₱{selectedBuddy.pricePerDay + 49}</p>
-                          <p className="text-xs text-stone/40">per day</p>
-                        </div>
+                      <div className="flex justify-between items-baseline">
+                        <p className="text-xs" style={{ color: '#aaa' }}>Total estimate</p>
+                        <p className="guides-display text-3xl font-bold" style={{ color: '#2563eb' }}>₱{selectedBuddy.pricePerDay + 49}</p>
                       </div>
                     </div>
+                  </div>
 
-                    <button 
-                      onClick={handleBook}
-                      disabled={isBooking}
-                      className="w-full bg-gradient-to-r from-forest to-earth text-white py-5 rounded-[2rem] font-bold text-lg hover:opacity-90 transition-all flex items-center justify-center gap-3 shadow-xl shadow-forest/20 relative overflow-hidden group"
-                    >
-                      <div className="absolute inset-0 bg-gradient-to-r from-earth/0 via-white/10 to-forest/0 group-hover:animate-shimmer" />
-                      {isBooking ? (
-                        <div className="w-6 h-6 border-3 border-white border-t-transparent rounded-full animate-spin relative z-10" />
-                      ) : (
-                        <>
-                          <Calendar className="w-5 h-5 relative z-10" />
-                          <span className="relative z-10">Book {selectedBuddy.name.split(' ')[0]}</span>
-                        </>
-                      )}
+                  {/* Book CTA */}
+                  <div className="p-8 pt-0">
+                    <button onClick={handleBook} disabled={isBooking}
+                      className="w-full py-4 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-opacity hover:opacity-90"
+                      style={{ background: '#2563eb', color: '#fff' }}>
+                      {isBooking ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        : <><Calendar className="w-4 h-4" /> Book {selectedBuddy.name.split(' ')[0]}</>}
                     </button>
                   </div>
-                </div>
-              </motion.div>
-            ) : (
-              <div className="h-[500px] flex flex-col items-center justify-center text-center p-12 border-4 border-dashed border-clay rounded-[4rem] bg-gradient-to-b from-white to-linen">
-                <div className="w-32 h-32 bg-gradient-to-br from-linen to-white rounded-full flex items-center justify-center text-stone/20 mb-8 border-8 border-clay shadow-inner">
-                  <Users className="w-16 h-16" />
-                </div>
-                <h3 className="text-3xl font-serif font-bold text-stone/40 mb-4">Select a Local Buddy</h3>
-                <p className="text-stone/30 text-lg max-w-sm mb-8">
-                  Browse through our verified local guides and choose your perfect companion for exploring Bukidnon.
-                </p>
-                <div className="flex items-center gap-4 text-sm text-stone/40">
-                  <div className="flex items-center gap-2">
-                    <ShieldCheck className="w-4 h-4" /> Verified
+                </motion.div>
+              ) : (
+                <div className="rounded-3xl border-2 border-dashed p-12 flex flex-col items-center text-center"
+                  style={{ borderColor: '#ddd8d0' }}>
+                  <div className="w-24 h-24 rounded-full flex items-center justify-center mb-6 border-4"
+                    style={{ borderColor: '#ede9e3', background: '#f7f5f2' }}>
+                    <Users className="w-10 h-10" style={{ color: '#ddd8d0' }} />
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Award className="w-4 h-4" /> Certified
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <MapPin className="w-4 h-4" /> Local
+                  <h3 className="guides-display text-2xl font-bold mb-2" style={{ color: '#bbb' }}>Select a Guide</h3>
+                  <p className="text-sm font-light" style={{ color: '#aaa' }}>
+                    Choose from our verified local experts to start planning your Bukidnon adventure.
+                  </p>
+                  <div className="flex items-center gap-4 mt-6 text-xs" style={{ color: '#bbb' }}>
+                    <span className="flex items-center gap-1"><ShieldCheck className="w-4 h-4" /> Verified</span>
+                    <span className="flex items-center gap-1"><Award className="w-4 h-4" /> Certified</span>
+                    <span className="flex items-center gap-1"><MapPin className="w-4 h-4" /> Local</span>
                   </div>
                 </div>
-              </div>
-            )}
-          </AnimatePresence>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
       </div>
     </div>
