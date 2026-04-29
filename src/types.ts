@@ -56,6 +56,7 @@ export interface FoodSpot {
     address: string;
   };
   rating: number;
+  cuisineType?: string | string[];
   menu?: {
     name: string;
     price: string;
