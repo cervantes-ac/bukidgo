@@ -149,25 +149,123 @@ export default function ItineraryGenerator() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/generate-itinerary", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          prompt: `Generate a travel itinerary for Bukidnon, Philippines.
-          Trip Type: ${formData.tripType}
-          Duration: ${formData.duration} days
-          Budget: ${formData.budget}
-          Additional Preferences: ${formData.preferences}
-          Return ONLY a JSON object: { "title":"...","summary":"...","days":[{"day":1,"activities":[{"time":"08:00 AM","activity":"...","location":"...","description":"..."}]}],"estimatedCost":"...","tips":["..."] }`,
-        }),
-      });
-      if (!res.ok) {
-        const e = await res.json();
-        throw new Error(e.error || "Failed");
+      // Mock data generation instead of API call
+      await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate API delay
+      
+      const mockItineraries = {
+        adventure: {
+          title: "Bukidnon Adventure Expedition",
+          summary: "An action-packed journey through Bukidnon's most thrilling landscapes, featuring mountain treks, river adventures, and cultural encounters.",
+          days: [
+            {
+              day: 1,
+              activities: [
+                { time: "08:00 AM", activity: "Arrival & Check-in", location: "Dahilayan Adventure Park", description: "Arrive at your accommodation and get settled. Brief orientation about the adventure ahead." },
+                { time: "10:00 AM", activity: "Zipline Adventure", location: "Dahilayan Zipline", description: "Experience Asia's longest dual zipline with breathtaking views of the mountain ranges." },
+                { time: "01:00 PM", activity: "Lunch with Local Cuisine", location: "Bukidnon Farm Restaurant", description: "Enjoy authentic Binaki (steamed corn cake) and other local delicacies." },
+                { time: "03:00 PM", activity: "ATV Trail Riding", location: "Mountain ATV Trails", description: "Navigate through rugged terrain on all-terrain vehicles with experienced guides." }
+              ]
+            },
+            {
+              day: 2,
+              activities: [
+                { time: "07:00 AM", activity: "Mount Kitanglad Trek", location: "Kitanglad Range Natural Park", description: "Moderate hike through protected forest with chance to see rare Philippine eagles." },
+                { time: "12:00 PM", activity: "Picnic Lunch", location: "Nasuli Spring", description: "Freshwater spring picnic with locally sourced fruits and vegetables." },
+                { time: "02:00 PM", activity: "Waterfall Exploration", location: "Mantianak Falls", description: "Discover hidden waterfalls and natural pools perfect for swimming." }
+              ]
+            }
+          ],
+          estimatedCost: "₱3,500 - ₱5,000",
+          tips: [
+            "Wear comfortable hiking shoes with good grip",
+            "Bring waterproof bags for electronics",
+            "Stay hydrated - carry at least 2L water per person",
+            "Respect local indigenous communities and their traditions"
+          ]
+        },
+        nature: {
+          title: "Bukidnon Nature Immersion",
+          summary: "A serene journey through Bukidnon's pristine natural wonders, from pine forests to organic farms and tranquil waterfalls.",
+          days: [
+            {
+              day: 1,
+              activities: [
+                { time: "09:00 AM", activity: "Pine Forest Walk", location: "Bukidnon Pine Forest", description: "Gentle walk through scenic pine forests with photo opportunities." },
+                { time: "11:00 AM", activity: "Organic Farm Tour", location: "Bukidnon Organic Farms", description: "Learn about sustainable farming and taste fresh produce." },
+                { time: "02:00 PM", activity: "Butterfly Sanctuary", location: "Bukidnon Butterfly Garden", description: "Observe diverse butterfly species in their natural habitat." }
+              ]
+            }
+          ],
+          estimatedCost: "₱2,000 - ₱3,500",
+          tips: [
+            "Bring binoculars for bird watching",
+            "Use eco-friendly sunscreen and insect repellent",
+            "Support local artisans by purchasing handmade crafts",
+            "Leave no trace - pack out all trash"
+          ]
+        },
+        culture: {
+          title: "Bukidnon Cultural Heritage Tour",
+          summary: "Immerse yourself in Bukidnon's rich cultural tapestry, from indigenous traditions to colonial history and local arts.",
+          days: [
+            {
+              day: 1,
+              activities: [
+                { time: "09:00 AM", activity: "Kaamulan Cultural Center", location: "Bukidnon Cultural Center", description: "Introduction to Bukidnon's indigenous tribes and their traditions." },
+                { time: "11:00 AM", activity: "Traditional Weaving Workshop", location: "Talaandig Weaving Village", description: "Learn basic weaving techniques from master weavers." },
+                { time: "02:00 PM", activity: "Historical Church Visit", location: "Immaculate Conception Church", description: "Explore Spanish-era architecture and religious artifacts." }
+              ]
+            }
+          ],
+          estimatedCost: "₱1,800 - ₱2,800",
+          tips: [
+            "Ask permission before taking photos of people",
+            "Learn basic greetings in local dialects",
+            "Participate respectfully in cultural activities",
+            "Purchase authentic crafts directly from artisans"
+          ]
+        },
+        food: {
+          title: "Bukidnon Food & Farm Trail",
+          summary: "A culinary adventure through Bukidnon's agricultural heartland, featuring farm-to-table experiences and local food traditions.",
+          days: [
+            {
+              day: 1,
+              activities: [
+                { time: "08:00 AM", activity: "Coffee Farm Tour", location: "Bukidnon Coffee Plantation", description: "From bean to cup: learn about coffee cultivation and processing." },
+                { time: "11:00 AM", activity: "Cooking Class", location: "Local Kitchen Studio", description: "Prepare traditional dishes like Binaki and Sinuglaw." },
+                { time: "02:00 PM", activity: "Food Market Exploration", location: "Bukidnon Public Market", description: "Taste local specialties and interact with food vendors." }
+              ]
+            }
+          ],
+          estimatedCost: "₱2,500 - ₱3,800",
+          tips: [
+            "Come hungry - there's plenty to taste!",
+            "Ask about food origins and preparation methods",
+            "Try street food from reputable vendors",
+            "Share dishes to sample more variety"
+          ]
+        }
+      };
+
+      // Select itinerary based on trip type
+      const selectedItinerary = mockItineraries[formData.tripType as keyof typeof mockItineraries] || mockItineraries.adventure;
+      
+      // Adjust for duration
+      const duration = parseInt(formData.duration);
+      if (duration > 1 && selectedItinerary.days.length === 1) {
+        // Duplicate and modify days for longer trips
+        const extendedDays = [];
+        for (let i = 0; i < duration; i++) {
+          extendedDays.push({
+            day: i + 1,
+            activities: [...selectedItinerary.days[0].activities.map((act: any) => ({ ...act }))]
+          });
+        }
+        selectedItinerary.days = extendedDays;
       }
-      const data = await res.json();
-      const text = data.text.replace(/```json|```/g, "").trim();
-      setItinerary(JSON.parse(text));
+
+      setItinerary(selectedItinerary);
     } catch (err: any) {
       setError(err.message || "Failed to generate. Please try again.");
     } finally {

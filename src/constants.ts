@@ -1,4 +1,3 @@
-
 export const LOCAL_BUDDIES = [
   {
     uid: "buddy1",
@@ -7,7 +6,8 @@ export const LOCAL_BUDDIES = [
     rating: 4.9,
     pricePerDay: 250,
     photoURL: "/img/BukidGO/default-person.svg",
-    bio: "Passionate about Bukidnon's agricultural tourism and local history."
+    bio: "Passionate about Bukidnon's agricultural tourism and local history.",
+    specialties: ["Agriculture", "History", "Farm Tours"]
   },
   {
     uid: "buddy2",
@@ -16,7 +16,8 @@ export const LOCAL_BUDDIES = [
     rating: 5.0,
     pricePerDay: 300,
     photoURL: "/img/BukidGO/4.jpg",
-    bio: "Expert mountaineer and adventure specialist. I'll take you to the highest peaks!"
+    bio: "Expert mountaineer and adventure specialist. I'll take you to the highest peaks!",
+    specialties: ["Mountaineering", "Adventure", "Trekking"]
   },
   {
     uid: "buddy3",
@@ -25,7 +26,8 @@ export const LOCAL_BUDDIES = [
     rating: 4.8,
     pricePerDay: 200,
     photoURL: "/img/BukidGO/1.jpg",
-    bio: "Nature lover and waterfall chaser. Let's explore CEDAR together."
+    bio: "Nature lover and waterfall chaser. Let's explore CEDAR together.",
+    specialties: ["Nature", "Waterfalls", "Eco-Tourism"]
   },
   {
     uid: "buddy4",
@@ -34,7 +36,8 @@ export const LOCAL_BUDDIES = [
     rating: 4.7,
     pricePerDay: 180,
     photoURL: "/img/BukidGO/5.jpg",
-    bio: "Cultural preservationist and storyteller. Expert on Kaamulan traditions."
+    bio: "Cultural preservationist and storyteller. Expert on Kaamulan traditions.",
+    specialties: ["Culture", "Indigenous Traditions", "Storytelling"]
   },
   {
     uid: "buddy5",
@@ -43,7 +46,8 @@ export const LOCAL_BUDDIES = [
     rating: 4.9,
     pricePerDay: 220,
     photoURL: "/img/BukidGO/2.jpg",
-    bio: "Certified tour guide specializing in religious and heritage sites."
+    bio: "Certified tour guide specializing in religious and heritage sites.",
+    specialties: ["Heritage", "Religious Sites", "Architecture"]
   },
   {
     uid: "buddy6",
@@ -52,7 +56,8 @@ export const LOCAL_BUDDIES = [
     rating: 4.8,
     pricePerDay: 240,
     photoURL: "/img/BukidGO/3.jpg",
-    bio: "Food enthusiast and budget travel expert. I know the best Binaki spots!"
+    bio: "Food enthusiast and budget travel expert. I know the best Binaki spots!",
+    specialties: ["Food", "Budget Travel", "Local Cuisine"]
   },
   {
     uid: "buddy7",
@@ -61,7 +66,8 @@ export const LOCAL_BUDDIES = [
     rating: 4.9,
     pricePerDay: 210,
     photoURL: "/img/BukidGO/6.jpg",
-    bio: "Adventure-ready guide with a focus on family-friendly destinations."
+    bio: "Adventure-ready guide with a focus on family-friendly destinations.",
+    specialties: ["Family Travel", "Adventure", "Accessible Tourism"]
   }
 ];
 
