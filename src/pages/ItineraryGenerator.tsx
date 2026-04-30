@@ -2,38 +2,55 @@ import { useState, useRef } from "react";
 import { Sparkles, Send, Clock, DollarSign, Edit2, Download, Plus, Trash2, Save, MapPin } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import jsPDF from "jspdf";
+import { colors } from "../theme";
+
+// Bukidnon Green Mountain Theme
+const THEME = {
+  darkBg: "#1B4D2E",
+  mainBg: "#F5F9F7",
+  primaryAccent: "#2D7A4A",
+  secondaryAccent: "#7BC97F",
+  text: "#1A3A2A",
+  borders: "#C8DDD4",
+  earthBrown: "#8B6F47",
+  goldenAccent: "#D4A574",
+  lightText: "rgba(232, 243, 237, 0.4)",
+  darkText: "#1A1208",
+  lightBg: "#F5F0E8",
+  brownAccent: "#C4622D",
+};
 
 const S = `
   @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;0,9..144,900;1,9..144,300;1,9..144,700&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
   .bk-display { font-family: 'Fraunces', Georgia, serif; }
   .bk-mono { font-family: 'JetBrains Mono', monospace; }
-  input, textarea, select { font-family: 'Outfit', sans-serif; color: #1A1208; }
+  input, textarea, select { font-family: 'Outfit', sans-serif; color: #1A3A2A; }
   .form-input {
-    width: 100%; background: #EDE7DC; border: 1px solid #DDD6C8;
-    padding: 12px 14px; font-size: 14px; color: #1A1208;
+    width: 100%; background: #E8F3ED; border: 1px solid #C8DDD4;
+    padding: 12px 14px; font-size: 14px; color: #1A3A2A;
     outline: none; transition: border-color 0.15s; border-radius: 2px;
   }
-  .form-input::placeholder { color: #B8B0A4; }
-  .form-input:focus { border-color: #C4622D; }
+  .form-input::placeholder { color: #8B6F47; }
+  .form-input:focus { border-color: #2D7A4A; }
   .type-btn {
-    padding: 16px; background: #EDE7DC; border: 1px solid #DDD6C8;
+    padding: 16px; background: #E8F3ED; border: 1px solid #C8DDD4;
     cursor: pointer; text-align: left; transition: all 0.15s; border-radius: 2px;
   }
-  .type-btn:hover { border-color: #C4622D; }
-  .type-btn.active { background: #C4622D; border-color: #C4622D; }
-  .type-btn.active .type-label { color: #F5F0E8 !important; }
+  .type-btn:hover { border-color: #2D7A4A; }
+  .type-btn.active { background: #2D7A4A; border-color: #2D7A4A; }
+  .type-btn.active .type-label { color: #F5F9F7 !important; }
   .budget-btn {
-    flex: 1; padding: 12px 8px; background: #EDE7DC; border: 1px solid #DDD6C8;
+    flex: 1; padding: 12px 8px; background: #E8F3ED; border: 1px solid #C8DDD4;
     cursor: pointer; text-align: center; transition: all 0.15s; border-radius: 2px;
   }
-  .budget-btn.active { background: #1A1208; border-color: #1A1208; }
-  .budget-btn.active .budget-label { color: #D4A853 !important; }
-  .budget-btn.active .budget-sub { color: rgba(245,240,232,0.4) !important; }
-  .activity-row { background: #fff; border-bottom: 1px solid #F5F0E8; transition: background 0.1s; }
-  .activity-row:hover { background: #FEFCF9; }
-  .edit-field { background: #EDE7DC; border: 1px solid #DDD6C8; padding: 6px 10px; font-size: 13px; color: #1A1208; border-radius: 2px; outline: none; }
-  .edit-field:focus { border-color: #C4622D; }
-  input[type="range"] { accent-color: #C4622D; }
+  .budget-btn.active { background: #1B4D2E; border-color: #1B4D2E; }
+  .budget-btn.active .budget-label { color: #D4A574 !important; }
+  .budget-btn.active .budget-sub { color: rgba(232, 243, 237, 0.4) !important; }
+  .activity-row { background: #fff; border-bottom: 1px solid #E8F3ED; transition: background 0.1s; }
+  .activity-row:hover { background: #F5F9F7; }
+  .edit-field { background: #E8F3ED; border: 1px solid #C8DDD4; padding: 6px 10px; font-size: 13px; color: #1A3A2A; border-radius: 2px; outline: none; }
+  .edit-field:focus { border-color: #2D7A4A; }
+  input[type="range"] { accent-color: #2D7A4A; }
   @keyframes pulse { 0%,100% { opacity: 0.3; } 50% { opacity: 1; } }
   .dot { animation: pulse 1.2s ease infinite; }
   .dot:nth-child(2) { animation-delay: 0.2s; }
@@ -276,19 +293,19 @@ export default function ItineraryGenerator() {
   return (
     <>
       <style>{S}</style>
-      <div style={{ fontFamily: "'Outfit', sans-serif", background: "#F5F0E8", color: "#1A1208", minHeight: "100vh" }}>
+      <div style={{ fontFamily: "'Outfit', sans-serif", background: THEME.mainBg, color: THEME.text, minHeight: "100vh" }}>
 
         {/* Header */}
-        <div style={{ background: "#1A1208", padding: "clamp(48px, 6vw, 64px) clamp(16px, 2vw, 2rem) clamp(32px, 4vw, 48px)", borderBottom: "1px solid rgba(245,240,232,0.06)" }}>
+        <div style={{ background: THEME.darkBg, padding: "clamp(48px, 6vw, 64px) clamp(16px, 2vw, 2rem) clamp(32px, 4vw, 48px)", borderBottom: `1px solid rgba(232, 243, 237, 0.06)` }}>
           <div style={{ maxWidth: 1280, margin: "0 auto" }}>
-            <div className="bk-mono" style={{ fontSize: "clamp(9px, 1.5vw, 10px)", color: "#D4A853", letterSpacing: "0.35em", textTransform: "uppercase", marginBottom: "clamp(10px, 2vw, 14px)", display: "flex", alignItems: "center", gap: "clamp(6px, 1vw, 10px)" }}>
+            <div className="bk-mono" style={{ fontSize: "clamp(9px, 1.5vw, 10px)", color: THEME.goldenAccent, letterSpacing: "0.35em", textTransform: "uppercase", marginBottom: "clamp(10px, 2vw, 14px)", display: "flex", alignItems: "center", gap: "clamp(6px, 1vw, 10px)" }}>
               <Sparkles style={{ width: "clamp(10px, 1.5vw, 12px)", height: "clamp(10px, 1.5vw, 12px)" }} />
               AI-Powered · Bukidnon
             </div>
-            <h1 className="bk-display" style={{ fontSize: "clamp(2rem,6vw,5.5rem)", fontWeight: 900, color: "#F5F0E8", lineHeight: 0.95, marginBottom: "clamp(12px, 2vw, 16px)" }}>
-              Smart Itinerary<br /><em style={{ color: "#D4A853" }}>Generator</em>
+            <h1 className="bk-display" style={{ fontSize: "clamp(2rem,6vw,5.5rem)", fontWeight: 900, color: THEME.mainBg, lineHeight: 0.95, marginBottom: "clamp(12px, 2vw, 16px)" }}>
+              Smart Itinerary<br /><em style={{ color: THEME.secondaryAccent }}>Generator</em>
             </h1>
-            <p style={{ fontSize: "clamp(14px, 2vw, 15px)", color: "rgba(245,240,232,0.4)", fontWeight: 300, maxWidth: "min(100%, 440px)" }}>
+            <p style={{ fontSize: "clamp(14px, 2vw, 15px)", color: "rgba(232, 243, 237, 0.4)", fontWeight: 300, maxWidth: "min(100%, 440px)" }}>
               Tell us what you love — get a tailored multi-day Bukidnon plan in seconds.
             </p>
           </div>
@@ -299,17 +316,17 @@ export default function ItineraryGenerator() {
           <div className="itinerary-grid" style={{ display: "grid", gridTemplateColumns: "1fr", gap: 32, alignItems: "start" }}>
 
             {/* ── FORM PANEL ── */}
-            <div style={{ background: "#fff", border: "1px solid #DDD6C8", padding: "clamp(24px, 3vw, 32px)" }}>
+            <div style={{ background: "#fff", border: `1px solid ${THEME.borders}`, padding: "clamp(24px, 3vw, 32px)" }}>
 
               {error && (
-                <div style={{ marginBottom: 20, padding: "12px 16px", background: "rgba(196,98,45,0.08)", border: "1px solid rgba(196,98,45,0.25)", borderRadius: 2, fontSize: 13, color: "#C4622D" }}>
+                <div style={{ marginBottom: 20, padding: "12px 16px", background: `rgba(45, 122, 74, 0.08)`, border: `1px solid rgba(45, 122, 74, 0.25)`, borderRadius: 2, fontSize: 13, color: THEME.primaryAccent }}>
                   {error}
                 </div>
               )}
 
               {/* Trip Type */}
               <div style={{ marginBottom: 28 }}>
-                <div className="bk-mono" style={{ fontSize: 9, color: "#7A6E61", letterSpacing: "0.2em", textTransform: "uppercase", marginBottom: 12 }}>Trip Type</div>
+                <div className="bk-mono" style={{ fontSize: 9, color: THEME.earthBrown, letterSpacing: "0.2em", textTransform: "uppercase", marginBottom: 12 }}>Trip Type</div>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 8 }}>
                   {tripTypes.map((t) => (
                     <button
@@ -318,7 +335,7 @@ export default function ItineraryGenerator() {
                       className={`type-btn ${formData.tripType === t.id ? "active" : ""}`}
                     >
                       <span style={{ fontSize: "clamp(18px, 4vw, 22px)", display: "block", marginBottom: 6, opacity: formData.tripType === t.id ? 1 : 0.6 }}>{t.icon}</span>
-                      <span className="type-label" style={{ fontSize: "clamp(12px, 2vw, 13px)", fontWeight: 600, color: formData.tripType === t.id ? "#F5F0E8" : "#7A6E61" }}>{t.label}</span>
+                      <span className="type-label" style={{ fontSize: "clamp(12px, 2vw, 13px)", fontWeight: 600, color: formData.tripType === t.id ? THEME.mainBg : THEME.earthBrown }}>{t.label}</span>
                     </button>
                   ))}
                 </div>
@@ -326,8 +343,8 @@ export default function ItineraryGenerator() {
 
               {/* Duration */}
               <div style={{ marginBottom: 28 }}>
-                <div className="bk-mono" style={{ fontSize: 9, color: "#7A6E61", letterSpacing: "0.2em", textTransform: "uppercase", marginBottom: 12 }}>
-                  Duration — <span style={{ color: "#C4622D" }}>{formData.duration} day{Number(formData.duration) !== 1 ? "s" : ""}</span>
+                <div className="bk-mono" style={{ fontSize: 9, color: THEME.earthBrown, letterSpacing: "0.2em", textTransform: "uppercase", marginBottom: 12 }}>
+                  Duration — <span style={{ color: THEME.primaryAccent }}>{formData.duration} day{Number(formData.duration) !== 1 ? "s" : ""}</span>
                 </div>
                 <input
                   type="range" min="1" max="7" value={formData.duration}
@@ -343,7 +360,7 @@ export default function ItineraryGenerator() {
 
               {/* Budget */}
               <div style={{ marginBottom: 28 }}>
-                <div className="bk-mono" style={{ fontSize: 9, color: "#7A6E61", letterSpacing: "0.2em", textTransform: "uppercase", marginBottom: 12 }}>Budget Level</div>
+                <div className="bk-mono" style={{ fontSize: 9, color: THEME.earthBrown, letterSpacing: "0.2em", textTransform: "uppercase", marginBottom: 12 }}>Budget Level</div>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                   {budgets.map((b) => (
                     <button
@@ -352,8 +369,8 @@ export default function ItineraryGenerator() {
                       className={`budget-btn ${formData.budget === b.id ? "active" : ""}`}
                       style={{ minWidth: "calc(33.333% - 4px)" }}
                     >
-                      <p className="budget-label" style={{ fontSize: "clamp(11px, 2vw, 12px)", fontWeight: 700, color: formData.budget === b.id ? "#D4A853" : "#7A6E61" }}>{b.label}</p>
-                      <p className="budget-sub" style={{ fontSize: "clamp(9px, 1.5vw, 10px)", marginTop: 2, color: formData.budget === b.id ? "rgba(245,240,232,0.4)" : "#B8B0A4" }}>{b.sub}</p>
+                      <p className="budget-label" style={{ fontSize: "clamp(11px, 2vw, 12px)", fontWeight: 700, color: formData.budget === b.id ? THEME.goldenAccent : THEME.earthBrown }}>{b.label}</p>
+                      <p className="budget-sub" style={{ fontSize: "clamp(9px, 1.5vw, 10px)", marginTop: 2, color: formData.budget === b.id ? "rgba(232, 243, 237, 0.4)" : "#8B6F47" }}>{b.sub}</p>
                     </button>
                   ))}
                 </div>
@@ -361,7 +378,7 @@ export default function ItineraryGenerator() {
 
               {/* Preferences */}
               <div style={{ marginBottom: 28 }}>
-                <div className="bk-mono" style={{ fontSize: 9, color: "#7A6E61", letterSpacing: "0.2em", textTransform: "uppercase", marginBottom: 12 }}>Specific Interests</div>
+                <div className="bk-mono" style={{ fontSize: 9, color: THEME.earthBrown, letterSpacing: "0.2em", textTransform: "uppercase", marginBottom: 12 }}>Specific Interests</div>
                 <textarea
                   placeholder="e.g. I love coffee, waterfalls, photography..."
                   value={formData.preferences}
@@ -376,14 +393,14 @@ export default function ItineraryGenerator() {
               <button
                 onClick={generateItinerary}
                 disabled={loading}
-                style={{ width: "100%", padding: "16px", background: loading ? "#DDD6C8" : "#C4622D", color: loading ? "#B8B0A4" : "#F5F0E8", border: "none", fontSize: 14, fontWeight: 700, cursor: loading ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, borderRadius: 2, transition: "background 0.15s" }}
+                style={{ width: "100%", padding: "16px", background: loading ? THEME.borders : THEME.primaryAccent, color: loading ? THEME.earthBrown : THEME.mainBg, border: "none", fontSize: 14, fontWeight: 700, cursor: loading ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, borderRadius: 2, transition: "background 0.15s" }}
               >
                 {loading ? (
                   <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
                     <span style={{ display: "flex", gap: 3 }}>
-                      <span className="dot" style={{ width: 6, height: 6, borderRadius: "50%", background: "#B8B0A4", display: "inline-block" }} />
-                      <span className="dot" style={{ width: 6, height: 6, borderRadius: "50%", background: "#B8B0A4", display: "inline-block" }} />
-                      <span className="dot" style={{ width: 6, height: 6, borderRadius: "50%", background: "#B8B0A4", display: "inline-block" }} />
+                      <span className="dot" style={{ width: 6, height: 6, borderRadius: "50%", background: THEME.earthBrown, display: "inline-block" }} />
+                      <span className="dot" style={{ width: 6, height: 6, borderRadius: "50%", background: THEME.earthBrown, display: "inline-block" }} />
+                      <span className="dot" style={{ width: 6, height: 6, borderRadius: "50%", background: THEME.earthBrown, display: "inline-block" }} />
                     </span>
                     Generating…
                   </span>
@@ -417,18 +434,18 @@ export default function ItineraryGenerator() {
                     </div>
 
                     {/* Summary Card */}
-                    <div ref={itineraryRef} style={{ background: "#1A1208", padding: "clamp(24px, 3vw, 36px)", position: "relative", overflow: "hidden" }}>
-                      <div style={{ position: "absolute", top: -40, right: -40, width: 200, height: 200, borderRadius: "50%", background: "radial-gradient(circle, rgba(212,168,83,0.1), transparent)" }} />
+                    <div ref={itineraryRef} style={{ background: THEME.darkBg, padding: "clamp(24px, 3vw, 36px)", position: "relative", overflow: "hidden" }}>
+                      <div style={{ position: "absolute", top: -40, right: -40, width: 200, height: 200, borderRadius: "50%", background: `radial-gradient(circle, rgba(212,168,83,0.1), transparent)` }} />
                       <div style={{ position: "relative" }}>
-                        <h2 className="bk-display" style={{ fontSize: "clamp(22px, 4vw, 28px)", fontWeight: 900, color: "#F5F0E8", marginBottom: "clamp(8px, 1.5vw, 10px)" }}>{itinerary.title}</h2>
-                        <p style={{ fontSize: "clamp(13px, 2vw, 14px)", color: "rgba(245,240,232,0.45)", fontWeight: 300, lineHeight: 1.7, marginBottom: "clamp(16px, 2.5vw, 20px)" }}>{itinerary.summary}</p>
+                        <h2 className="bk-display" style={{ fontSize: "clamp(22px, 4vw, 28px)", fontWeight: 900, color: THEME.mainBg, marginBottom: "clamp(8px, 1.5vw, 10px)" }}>{itinerary.title}</h2>
+                        <p style={{ fontSize: "clamp(13px, 2vw, 14px)", color: "rgba(232, 243, 237, 0.45)", fontWeight: 300, lineHeight: 1.7, marginBottom: "clamp(16px, 2.5vw, 20px)" }}>{itinerary.summary}</p>
                         <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                           {[
                             { icon: Clock, label: `${formData.duration} Days` },
                             { icon: DollarSign, label: itinerary.estimatedCost },
                             { icon: Sparkles, label: formData.budget },
                           ].map(({ icon: Icon, label }) => (
-                            <span key={label} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: "clamp(10px, 1.8vw, 11px)", fontWeight: 600, padding: "clamp(5px, 1vw, 6px) clamp(10px, 1.5vw, 12px)", background: "rgba(212,168,83,0.1)", border: "1px solid rgba(212,168,83,0.2)", color: "#D4A853" }}>
+                            <span key={label} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: "clamp(10px, 1.8vw, 11px)", fontWeight: 600, padding: "clamp(5px, 1vw, 6px) clamp(10px, 1.5vw, 12px)", background: "rgba(45, 122, 74, 0.1)", border: "1px solid rgba(45, 122, 74, 0.2)", color: THEME.goldenAccent }}>
                               <Icon style={{ width: "clamp(10px, 1.8vw, 12px)", height: "clamp(10px, 1.8vw, 12px)" }} /> {label}
                             </span>
                           ))}
@@ -439,11 +456,11 @@ export default function ItineraryGenerator() {
                     {/* Days */}
                     {itinerary.days?.map((day) => (
                       <div key={day.day}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "clamp(8px, 1.5vw, 12px)", padding: "clamp(12px, 2vw, 16px) 0", borderBottom: "2px solid #1A1208" }}>
-                          <div style={{ width: "clamp(28px, 3vw, 32px)", height: "clamp(28px, 3vw, 32px)", background: "#C4622D", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                            <span className="bk-mono" style={{ fontSize: "clamp(10px, 1.8vw, 11px)", fontWeight: 700, color: "#F5F0E8" }}>{String(day.day).padStart(2, "0")}</span>
+                        <div style={{ display: "flex", alignItems: "center", gap: "clamp(8px, 1.5vw, 12px)", padding: "clamp(12px, 2vw, 16px) 0", borderBottom: `2px solid ${THEME.darkBg}` }}>
+                          <div style={{ width: "clamp(28px, 3vw, 32px)", height: "clamp(28px, 3vw, 32px)", background: THEME.primaryAccent, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                            <span className="bk-mono" style={{ fontSize: "clamp(10px, 1.8vw, 11px)", fontWeight: 700, color: THEME.mainBg }}>{String(day.day).padStart(2, "0")}</span>
                           </div>
-                          <h3 className="bk-display" style={{ fontSize: "clamp(18px, 3vw, 20px)", fontWeight: 700, color: "#1A1208" }}>Day {day.day}</h3>
+                          <h3 className="bk-display" style={{ fontSize: "clamp(18px, 3vw, 20px)", fontWeight: 700, color: THEME.text }}>Day {day.day}</h3>
                         </div>
                         <div>
                           {day.activities?.map((act, i) => (
@@ -457,7 +474,7 @@ export default function ItineraryGenerator() {
                                     style={{ width: "100%", maxWidth: 100, flexShrink: 0, fontSize: "clamp(9px, 1.5vw, 10px)" }}
                                   />
                                 ) : (
-                                  <span className="bk-mono" style={{ fontSize: "clamp(9px, 1.5vw, 10px)", color: "#C4622D", background: "rgba(196,98,45,0.08)", padding: "4px 10px", border: "1px solid rgba(196,98,45,0.15)", flexShrink: 0, whiteSpace: "nowrap" }}>{act.time}</span>
+                                  <span className="bk-mono" style={{ fontSize: "clamp(9px, 1.5vw, 10px)", color: THEME.primaryAccent, background: `rgba(45, 122, 74, 0.08)`, padding: "4px 10px", border: `1px solid rgba(45, 122, 74, 0.15)`, flexShrink: 0, whiteSpace: "nowrap" }}>{act.time}</span>
                                 )}
                                 <div style={{ flex: 1, minWidth: 0 }}>
                                   {isEditing ? (
@@ -487,8 +504,8 @@ export default function ItineraryGenerator() {
                                     </div>
                                   ) : (
                                     <>
-                                      <h4 style={{ fontWeight: 600, fontSize: "clamp(14px, 2vw, 15px)", color: "#1A1208", marginBottom: 4 }}>{act.activity}</h4>
-                                      <p style={{ fontSize: "clamp(11px, 1.8vw, 12px)", color: "#B8B0A4", display: "flex", alignItems: "center", gap: 4, marginBottom: 6 }}>
+                                      <h4 style={{ fontWeight: 600, fontSize: "clamp(14px, 2vw, 15px)", color: THEME.text, marginBottom: 4 }}>{act.activity}</h4>
+                                      <p style={{ fontSize: "clamp(11px, 1.8vw, 12px)", color: THEME.earthBrown, display: "flex", alignItems: "center", gap: 4, marginBottom: 6 }}>
                                         <MapPin style={{ width: 12, height: 12 }} />
                                         {typeof act.location === "string" ? act.location : (act.location as any)?.address || JSON.stringify(act.location)}
                                       </p>
@@ -499,7 +516,7 @@ export default function ItineraryGenerator() {
                                 {isEditing && (
                                   <button
                                     onClick={() => removeActivity(day.day - 1, i)}
-                                    style={{ padding: 6, background: "rgba(196,98,45,0.08)", border: "1px solid rgba(196,98,45,0.2)", borderRadius: 2, cursor: "pointer", color: "#C4622D", display: "flex", flexShrink: 0 }}
+                                    style={{ padding: 6, background: `rgba(45, 122, 74, 0.08)`, border: `1px solid rgba(45, 122, 74, 0.2)`, borderRadius: 2, cursor: "pointer", color: THEME.primaryAccent, display: "flex", flexShrink: 0 }}
                                   >
                                     <Trash2 style={{ width: 13, height: 13 }} />
                                   </button>
@@ -510,7 +527,7 @@ export default function ItineraryGenerator() {
                           {isEditing && (
                             <button
                               onClick={() => addActivity(day.day - 1)}
-                              style={{ width: "100%", padding: "12px", background: "transparent", border: "1px dashed #DDD6C8", color: "#B8B0A4", fontSize: 13, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, marginTop: 8, borderRadius: 2 }}
+                              style={{ width: "100%", padding: "12px", background: "transparent", border: `1px dashed ${THEME.borders}`, color: THEME.earthBrown, fontSize: 13, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, marginTop: 8, borderRadius: 2 }}
                             >
                               <Plus style={{ width: 14, height: 14 }} /> Add Activity
                             </button>
@@ -520,8 +537,8 @@ export default function ItineraryGenerator() {
                     ))}
 
                     {/* Tips */}
-                    <div style={{ background: "#FAF7F2", border: "1px solid #DDD6C8", padding: "clamp(24px, 3vw, 32px)" }}>
-                      <div className="bk-mono" style={{ fontSize: 9, color: "#C4622D", letterSpacing: "0.25em", textTransform: "uppercase", marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}>
+                    <div style={{ background: "#FAF7F2", border: `1px solid ${THEME.borders}`, padding: "clamp(24px, 3vw, 32px)" }}>
+                      <div className="bk-mono" style={{ fontSize: 9, color: THEME.primaryAccent, letterSpacing: "0.25em", textTransform: "uppercase", marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}>
                         <Sparkles style={{ width: 12, height: 12 }} /> Expert Tips
                       </div>
                       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 280px), 1fr))", gap: 12 }}>
@@ -540,18 +557,18 @@ export default function ItineraryGenerator() {
                     key="empty"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    style={{ minHeight: "clamp(300px, 50vh, 500px)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", border: "1px dashed #DDD6C8", padding: "clamp(32px, 5vw, 64px) clamp(16px, 2vw, 32px)", textAlign: "center" }}
+                    style={{ minHeight: "clamp(300px, 50vh, 500px)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", border: `1px dashed ${THEME.borders}`, padding: "clamp(32px, 5vw, 64px) clamp(16px, 2vw, 32px)", textAlign: "center" }}
                   >
-                    <div style={{ width: "clamp(60px, 10vw, 80px)", height: "clamp(60px, 10vw, 80px)", background: "rgba(196,98,45,0.06)", border: "1px solid rgba(196,98,45,0.15)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "clamp(16px, 2.5vw, 20px)" }}>
-                      <Sparkles style={{ width: "clamp(24px, 4vw, 32px)", height: "clamp(24px, 4vw, 32px)", color: "rgba(196,98,45,0.3)" }} />
+                    <div style={{ width: "clamp(60px, 10vw, 80px)", height: "clamp(60px, 10vw, 80px)", background: `rgba(45, 122, 74, 0.06)`, border: `1px solid rgba(45, 122, 74, 0.15)`, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "clamp(16px, 2.5vw, 20px)" }}>
+                      <Sparkles style={{ width: "clamp(24px, 4vw, 32px)", height: "clamp(24px, 4vw, 32px)", color: "rgba(45, 122, 74, 0.3)" }} />
                     </div>
-                    <h3 className="bk-display" style={{ fontSize: "clamp(20px, 4vw, 24px)", fontWeight: 900, color: "#DDD6C8", marginBottom: "clamp(6px, 1vw, 8px)" }}>Your plan awaits</h3>
-                    <p style={{ fontSize: "clamp(13px, 2vw, 14px)", color: "#B8B0A4", fontWeight: 300, maxWidth: "min(100%, 300px)", lineHeight: 1.6 }}>
+                    <h3 className="bk-display" style={{ fontSize: "clamp(20px, 4vw, 24px)", fontWeight: 900, color: THEME.borders, marginBottom: "clamp(6px, 1vw, 8px)" }}>Your plan awaits</h3>
+                    <p style={{ fontSize: "clamp(13px, 2vw, 14px)", color: THEME.earthBrown, fontWeight: 300, maxWidth: "min(100%, 300px)", lineHeight: 1.6 }}>
                       Set your preferences on the left and hit generate to create your personalized Bukidnon itinerary.
                     </p>
                     <div style={{ display: "flex", gap: 8, marginTop: "clamp(20px, 3vw, 28px)", flexWrap: "wrap", justifyContent: "center" }}>
                       {["Adventure", "Nature", "Culture", "Food"].map((t) => (
-                        <span key={t} style={{ fontSize: "clamp(10px, 1.8vw, 11px)", padding: "clamp(5px, 1vw, 6px) clamp(10px, 1.5vw, 12px)", border: "1px solid #DDD6C8", color: "#B8B0A4" }}>{t}</span>
+                        <span key={t} style={{ fontSize: "clamp(10px, 1.8vw, 11px)", padding: "clamp(5px, 1vw, 6px) clamp(10px, 1.5vw, 12px)", border: `1px solid ${THEME.borders}`, color: THEME.earthBrown }}>{t}</span>
                       ))}
                     </div>
                   </motion.div>

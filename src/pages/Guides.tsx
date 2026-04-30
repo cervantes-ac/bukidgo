@@ -1,4 +1,4 @@
-import { Star, ShieldCheck, Calendar, DollarSign, Briefcase, CheckCircle2, Search, X, Users, Award, MapPin } from "lucide-react";
+import { Star, ShieldCheck, Calendar, Briefcase, CheckCircle2, Search, X, Award, Users, MapPin } from "lucide-react";
 import { LOCAL_BUDDIES } from "../constants";
 import { motion, AnimatePresence } from "motion/react";
 import { useState, useMemo, useEffect } from "react";
@@ -6,23 +6,41 @@ import { useFirebase } from "../contexts/FirebaseContext";
 import { db, OperationType, handleFirestoreError } from "../lib/firebase";
 import { collection, addDoc, serverTimestamp, onSnapshot } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
+import { colors } from "../theme";
+
+// Bukidnon Green Mountain Theme Colors
+const THEME = {
+  darkBg: "#1B4D2E",
+  mainBg: "#F5F9F7",
+  primaryAccent: "#2D7A4A",
+  secondaryAccent: "#7BC97F",
+  text: "#1A3A2A",
+  borders: "#C8DDD4",
+  earthBrown: "#8B6F47",
+  goldenAccent: "#D4A574",
+  lightText: "rgba(245, 249, 247, 0.45)",
+  darkText: "#1A1208",
+  lightBg: "#F5F0E8",
+  brownAccent: "#C4622D",
+  verifiedGreen: "#4A7C59",
+};
 
 const S = `
   @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;0,9..144,900;1,9..144,300;1,9..144,700&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
   .bk-display { font-family: 'Fraunces', Georgia, serif; }
   .bk-mono { font-family: 'JetBrains Mono', monospace; }
   .guide-row { transition: background 0.15s; cursor: pointer; }
-  .guide-row:hover { background: rgba(26,18,8,0.03) !important; }
-  .guide-row.selected { background: #F5EFE6 !important; border-left: 3px solid #C4622D !important; }
+  .guide-row:hover { background: rgba(45, 122, 74, 0.05) !important; }
+  .guide-row.selected { background: #E8F3ED !important; border-left: 3px solid #2D7A4A !important; }
   .guide-img { transition: transform 0.5s ease; }
   .guide-row:hover .guide-img { transform: scale(1.06); }
   input, select { font-family: 'Outfit', sans-serif; }
-  select option { background: #F5F0E8; }
-  input[type="range"] { accent-color: #C4622D; }
+  select option { background: #F5F9F7; }
+  input[type="range"] { accent-color: #2D7A4A; }
   .scroll-pane::-webkit-scrollbar { width: 4px; }
-  .scroll-pane::-webkit-scrollbar-thumb { background: #DDD6C8; border-radius: 99px; }
+  .scroll-pane::-webkit-scrollbar-thumb { background: #C8DDD4; border-radius: 99px; }
   .book-btn { transition: all 0.15s; }
-  .book-btn:hover:not(:disabled) { background: #A8501F !important; }
+  .book-btn:hover:not(:disabled) { background: #1B4D2E !important; }
   @keyframes spin { to { transform: rotate(360deg); } }
 `;
 
@@ -85,34 +103,34 @@ export default function Guides() {
     setSpecialties(prev => prev.includes(s) ? prev.filter(x => x !== s) : [...prev, s]);
 
   const badgeFor = (r: number) =>
-    r >= 4.8 ? { label: "Elite", bg: "#7c3aed" } : r >= 4.5 ? { label: "Top Rated", bg: "#C4622D" } : { label: "Verified", bg: "#4A7C59" };
+    r >= 4.8 ? { label: "Elite", bg: "#7c3aed" } : r >= 4.5 ? { label: "Top Rated", bg: THEME.brownAccent } : { label: "Verified", bg: THEME.verifiedGreen };
 
   return (
     <>
       <style>{S}</style>
-      <div style={{ fontFamily: "'Outfit', sans-serif", background: "#F5F0E8", color: "#1A1208", minHeight: "100vh" }}>
+      <div style={{ fontFamily: "'Outfit', sans-serif", background: THEME.mainBg, color: THEME.text, minHeight: "100vh" }}>
 
         {/* Hero */}
-        <div style={{ background: "#1A1208", padding: "72px 2rem 56px", borderBottom: "1px solid rgba(245,240,232,0.06)" }}>
+        <div style={{ background: THEME.darkBg, padding: "72px 2rem 56px", borderBottom: `1px solid rgba(197, 221, 212, 0.06)` }}>
           <div style={{ maxWidth: 1280, margin: "0 auto" }}>
-            <div className="bk-mono" style={{ fontSize: 10, color: "#D4A853", letterSpacing: "0.35em", textTransform: "uppercase", marginBottom: 14, display: "flex", alignItems: "center", gap: 10 }}>
-              <span style={{ display: "inline-block", width: 24, height: 1, background: "#D4A853" }} />
-              Local Experts · Bukidnon
+            <div className="bk-mono" style={{ fontSize: 10, color: THEME.goldenAccent, letterSpacing: "0.35em", textTransform: "uppercase", marginBottom: 14, display: "flex", alignItems: "center", gap: 10 }}>
+              <span style={{ display: "inline-block", width: 24, height: 1, background: THEME.goldenAccent }} />
+              Mountain Guides · Bukidnon
             </div>
             <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "flex-end", gap: 32 }}>
               <div>
-                <h1 className="bk-display" style={{ fontSize: "clamp(3rem,7vw,6.5rem)", fontWeight: 900, color: "#F5F0E8", lineHeight: 0.9, marginBottom: 16 }}>
-                  Your Local<br /><em style={{ color: "#D4A853" }}>Buddies</em>
+                <h1 className="bk-display" style={{ fontSize: "clamp(3rem,7vw,6.5rem)", fontWeight: 900, color: THEME.mainBg, lineHeight: 0.9, marginBottom: 16 }}>
+                  Your Local<br /><em style={{ color: THEME.secondaryAccent }}>Buddies</em>
                 </h1>
-                <p style={{ fontSize: 16, color: "rgba(245,240,232,0.45)", maxWidth: 440, lineHeight: 1.7, fontWeight: 300 }}>
+                <p style={{ fontSize: 16, color: THEME.lightText, maxWidth: 440, lineHeight: 1.7, fontWeight: 300 }}>
                   Verified guides who know every hidden gem, secret trail, and authentic experience.
                 </p>
               </div>
               <div style={{ display: "flex", gap: 40, paddingBottom: 8 }}>
-                {[["Total", liveGuides.length, "#F5F0E8"], ["Available", filteredGuides.length, "#D4A853"]].map(([label, val, color]) => (
+                {[["Total", liveGuides.length, THEME.mainBg], ["Available", filteredGuides.length, THEME.secondaryAccent]].map(([label, val, color]) => (
                   <div key={label as string} style={{ textAlign: "right" }}>
                     <div className="bk-display" style={{ fontSize: 52, fontWeight: 900, color: color as string, lineHeight: 1 }}>{val}</div>
-                    <div className="bk-mono" style={{ fontSize: 9, color: "rgba(245,240,232,0.3)", letterSpacing: "0.2em", textTransform: "uppercase", marginTop: 4 }}>{label}</div>
+                    <div className="bk-mono" style={{ fontSize: 9, color: "rgba(245, 249, 247, 0.3)", letterSpacing: "0.2em", textTransform: "uppercase", marginTop: 4 }}>{label}</div>
                   </div>
                 ))}
               </div>
@@ -121,36 +139,36 @@ export default function Guides() {
         </div>
 
         {/* Filter bar */}
-        <div style={{ position: "sticky", top: 72, zIndex: 20, background: "rgba(245,240,232,0.96)", backdropFilter: "blur(10px)", borderBottom: "1px solid #DDD6C8", padding: "14px 2rem" }}>
+        <div style={{ position: "sticky", top: 72, zIndex: 20, background: "rgba(245, 249, 247, 0.96)", backdropFilter: "blur(10px)", borderBottom: `1px solid ${THEME.borders}`, padding: "14px 2rem" }}>
           <div style={{ maxWidth: 1280, margin: "0 auto", display: "flex", flexWrap: "wrap", alignItems: "center", gap: 10 }}>
             <div style={{ flex: 1, minWidth: 180, maxWidth: 320, position: "relative" }}>
-              <Search style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", width: 14, height: 14, color: "#B8B0A4" }} />
+              <Search style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", width: 14, height: 14, color: THEME.earthBrown }} />
               <input type="text" placeholder="Search by name or specialty..." value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                style={{ width: "100%", paddingLeft: 36, paddingRight: 14, paddingTop: 10, paddingBottom: 10, background: "#fff", border: "1px solid #DDD6C8", borderRadius: 2, fontSize: 13, color: "#1A1208", outline: "none" }} />
+                style={{ width: "100%", paddingLeft: 36, paddingRight: 14, paddingTop: 10, paddingBottom: 10, background: "#fff", border: `1px solid ${THEME.borders}`, borderRadius: 2, fontSize: 13, color: THEME.text, outline: "none" }} />
             </div>
             <select value={minExperience} onChange={e => setMinExperience(Number(e.target.value))}
-              style={{ padding: "9px 12px", background: "#fff", border: "1px solid #DDD6C8", borderRadius: 2, fontSize: 12, color: "#1A1208", outline: "none" }}>
+              style={{ padding: "9px 12px", background: "#fff", border: `1px solid ${THEME.borders}`, borderRadius: 2, fontSize: 12, color: THEME.text, outline: "none" }}>
               <option value={0}>Any Experience</option>
               <option value={1}>1+ Year</option>
               <option value={3}>3+ Years</option>
               <option value={5}>5+ Years</option>
             </select>
             <select value={minRating} onChange={e => setMinRating(Number(e.target.value))}
-              style={{ padding: "9px 12px", background: "#fff", border: "1px solid #DDD6C8", borderRadius: 2, fontSize: 12, color: "#1A1208", outline: "none" }}>
+              style={{ padding: "9px 12px", background: "#fff", border: `1px solid ${THEME.borders}`, borderRadius: 2, fontSize: 12, color: THEME.text, outline: "none" }}>
               <option value={0}>Any Rating</option>
               <option value={4.0}>4.0+ ★</option>
               <option value={4.5}>4.5+ ★</option>
               <option value={4.8}>4.8+ ★</option>
             </select>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <span className="bk-mono" style={{ fontSize: 10, color: "#7A6E61" }}>≤ ₱{maxPrice}</span>
+              <span className="bk-mono" style={{ fontSize: 10, color: THEME.earthBrown }}>≤ ₱{maxPrice}</span>
               <input type="range" min="500" max="5000" step="100" value={maxPrice}
                 onChange={e => setMaxPrice(Number(e.target.value))} style={{ width: 90 }} />
             </div>
             {(searchQuery || minExperience > 0 || maxPrice < 5000 || minRating > 0 || specialties.length > 0) && (
               <button onClick={() => { setSearchQuery(""); setMinExperience(0); setMaxPrice(5000); setMinRating(0); setSpecialties([]); }}
-                style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, fontWeight: 600, color: "#C4622D", background: "transparent", border: "none", cursor: "pointer" }}>
+                style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, fontWeight: 600, color: THEME.primaryAccent, background: "transparent", border: "none", cursor: "pointer" }}>
                 <X style={{ width: 13, height: 13 }} /> Reset
               </button>
             )}
@@ -160,9 +178,9 @@ export default function Guides() {
               {allSpecialties.map(s => (
                 <button key={s} onClick={() => toggleSpecialty(s)}
                   style={{ padding: "5px 12px", borderRadius: 2, fontSize: 11, fontWeight: 600, cursor: "pointer", border: "1px solid", transition: "all 0.15s",
-                    background: specialties.includes(s) ? "#1A1208" : "transparent",
-                    color: specialties.includes(s) ? "#F5F0E8" : "#7A6E61",
-                    borderColor: specialties.includes(s) ? "#1A1208" : "#DDD6C8" }}>
+                    background: specialties.includes(s) ? THEME.darkBg : "transparent",
+                    color: specialties.includes(s) ? THEME.mainBg : THEME.earthBrown,
+                    borderColor: specialties.includes(s) ? THEME.darkBg : THEME.borders }}>
                   {s}
                 </button>
               ))}
@@ -184,7 +202,7 @@ export default function Guides() {
               ) : (
                 <div>
                   {/* Table header */}
-                  <div className="bk-mono" style={{ display: "grid", gridTemplateColumns: "1fr auto auto auto", gap: 16, padding: "0 8px 12px", fontSize: 9, color: "#B8B0A4", letterSpacing: "0.2em", textTransform: "uppercase", borderBottom: "1px solid #DDD6C8", marginBottom: 0 }}>
+                  <div className="bk-mono" style={{ display: "grid", gridTemplateColumns: "1fr auto auto auto", gap: 16, padding: "0 8px 12px", fontSize: 9, color: THEME.earthBrown, letterSpacing: "0.2em", textTransform: "uppercase", borderBottom: `1px solid ${THEME.borders}`, marginBottom: 0 }}>
                     <span>Guide</span><span>Experience</span><span>Rating</span><span>Rate</span>
                   </div>
                   {filteredGuides.map((buddy, i) => {
@@ -194,21 +212,21 @@ export default function Guides() {
                         layout initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.04 }}
                         onClick={() => setSelectedBuddy(buddy)}
                         className={`guide-row ${selectedBuddy?.uid === buddy.uid ? "selected" : ""}`}
-                        style={{ display: "grid", gridTemplateColumns: "1fr auto auto auto", gap: 16, alignItems: "center", padding: "20px 8px", borderBottom: "1px solid #DDD6C8", borderLeft: selectedBuddy?.uid === buddy.uid ? "3px solid #C4622D" : "3px solid transparent" }}>
+                        style={{ display: "grid", gridTemplateColumns: "1fr auto auto auto", gap: 16, alignItems: "center", padding: "20px 8px", borderBottom: `1px solid ${THEME.borders}`, borderLeft: selectedBuddy?.uid === buddy.uid ? `3px solid ${THEME.primaryAccent}` : "3px solid transparent" }}>
 
                         {/* Name & info */}
                         <div style={{ display: "flex", alignItems: "center", gap: 16, minWidth: 0 }}>
                           <div style={{ position: "relative", flexShrink: 0 }}>
-                            <div style={{ width: 56, height: 56, overflow: "hidden", borderRadius: 2, border: "1px solid #DDD6C8" }}>
+                            <div style={{ width: 56, height: 56, overflow: "hidden", borderRadius: 2, border: `1px solid #DDD6C8` }}>
                               <img src={buddy.photoURL} className="guide-img" style={{ width: "100%", height: "100%", objectFit: "cover" }} alt={buddy.name} />
                             </div>
-                            <div style={{ position: "absolute", bottom: -3, right: -3, width: 18, height: 18, background: "#4A7C59", borderRadius: "50%", border: "2px solid #F5F0E8", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                            <div style={{ position: "absolute", bottom: -3, right: -3, width: 18, height: 18, background: THEME.verifiedGreen, borderRadius: "50%", border: "2px solid #F5F0E8", display: "flex", alignItems: "center", justifyContent: "center" }}>
                               <ShieldCheck style={{ width: 9, height: 9, color: "#fff" }} />
                             </div>
                           </div>
                           <div style={{ minWidth: 0 }}>
                             <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 3 }}>
-                              <h3 className="bk-display" style={{ fontSize: 19, fontWeight: 700, color: "#1A1208" }}>{buddy.name}</h3>
+                              <h3 className="bk-display" style={{ fontSize: 19, fontWeight: 700, color: THEME.text }}>{buddy.name}</h3>
                               <span className="bk-mono" style={{ fontSize: 9, fontWeight: 700, padding: "2px 8px", background: badge.bg, color: "#fff", letterSpacing: "0.1em" }}>
                                 {badge.label}
                               </span>
@@ -216,9 +234,9 @@ export default function Guides() {
                             {buddy.specialties && (
                               <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
                                 {buddy.specialties.slice(0, 3).map((s: string, idx: number) => (
-                                  <span key={idx} style={{ fontSize: 10, background: "rgba(196,98,45,0.08)", color: "#C4622D", padding: "2px 8px", fontWeight: 600 }}>{s}</span>
+                                  <span key={idx} style={{ fontSize: 10, background: "rgba(45, 122, 74, 0.08)", color: THEME.primaryAccent, padding: "2px 8px", fontWeight: 600 }}>{s}</span>
                                 ))}
-                                {buddy.specialties.length > 3 && <span style={{ fontSize: 10, color: "#B8B0A4" }}>+{buddy.specialties.length - 3}</span>}
+                                {buddy.specialties.length > 3 && <span style={{ fontSize: 10, color: THEME.earthBrown }}>+{buddy.specialties.length - 3}</span>}
                               </div>
                             )}
                           </div>
@@ -226,21 +244,21 @@ export default function Guides() {
 
                         {/* Experience */}
                         <div style={{ textAlign: "right", whiteSpace: "nowrap" }}>
-                          <div className="bk-mono" style={{ fontSize: 11, color: "#7A6E61" }}>{buddy.experience}</div>
+                          <div className="bk-mono" style={{ fontSize: 11, color: THEME.earthBrown }}>{buddy.experience}</div>
                         </div>
 
                         {/* Rating */}
                         <div style={{ textAlign: "right", whiteSpace: "nowrap" }}>
                           <div style={{ display: "flex", alignItems: "center", gap: 3 }}>
                             <Star style={{ width: 12, height: 12, fill: "#D4A853", color: "#D4A853" }} />
-                            <span style={{ fontWeight: 700, fontSize: 13, color: "#1A1208" }}>{buddy.rating}</span>
+                            <span style={{ fontWeight: 700, fontSize: 13, color: THEME.darkText }}>{buddy.rating}</span>
                           </div>
                         </div>
 
                         {/* Price */}
                         <div style={{ textAlign: "right", whiteSpace: "nowrap" }}>
-                          <div className="bk-display" style={{ fontSize: 20, fontWeight: 900, color: "#C4622D" }}>₱{buddy.pricePerDay}</div>
-                          <div className="bk-mono" style={{ fontSize: 9, color: "#B8B0A4" }}>/day</div>
+                          <div className="bk-display" style={{ fontSize: 20, fontWeight: 900, color: THEME.primaryAccent }}>₱{buddy.pricePerDay}</div>
+                          <div className="bk-mono" style={{ fontSize: 9, color: THEME.earthBrown }}>/day</div>
                         </div>
                       </motion.div>
                     );
@@ -254,29 +272,29 @@ export default function Guides() {
               <AnimatePresence mode="wait">
                 {booked ? (
                   <motion.div key="booked" initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}
-                    style={{ background: "#1A1208", padding: "56px 40px", textAlign: "center" }}>
-                    <CheckCircle2 style={{ width: 56, height: 56, color: "#4A7C59", margin: "0 auto 20px" }} />
-                    <h2 className="bk-display" style={{ fontSize: 32, fontWeight: 900, color: "#F5F0E8", marginBottom: 10 }}>Booked!</h2>
-                    <p style={{ color: "rgba(245,240,232,0.45)", fontSize: 14, lineHeight: 1.6 }}>
+                    style={{ background: THEME.darkText, padding: "56px 40px", textAlign: "center" }}>
+                    <CheckCircle2 style={{ width: 56, height: 56, color: THEME.verifiedGreen, margin: "0 auto 20px" }} />
+                    <h2 className="bk-display" style={{ fontSize: 32, fontWeight: 900, color: THEME.lightBg, marginBottom: 10 }}>Booked!</h2>
+                    <p style={{ color: "rgba(245, 240, 232, 0.45)", fontSize: 14, lineHeight: 1.6 }}>
                       Your request was sent to {selectedBuddy?.name.split(' ')[0]}. They'll reply within 24 hours.
                     </p>
                   </motion.div>
                 ) : selectedBuddy ? (
                   <motion.div key="detail" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                    style={{ background: "#fff", border: "1px solid #DDD6C8", overflow: "hidden" }}>
+                    style={{ background: "#fff", border: `1px solid #DDD6C8`, overflow: "hidden" }}>
                     {/* Header */}
                     <div style={{ padding: "28px 28px 24px", borderBottom: "1px solid #F5F0E8" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
                         <div style={{ position: "relative" }}>
                           <img src={selectedBuddy.photoURL} style={{ width: 72, height: 72, objectFit: "cover", borderRadius: 2 }} alt="" />
-                          <div style={{ position: "absolute", bottom: -4, right: -4, width: 22, height: 22, background: "#4A7C59", borderRadius: "50%", border: "2px solid #fff", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          <div style={{ position: "absolute", bottom: -4, right: -4, width: 22, height: 22, background: THEME.verifiedGreen, borderRadius: "50%", border: "2px solid #fff", display: "flex", alignItems: "center", justifyContent: "center" }}>
                             <Award style={{ width: 10, height: 10, color: "#fff" }} />
                           </div>
                         </div>
                         <div>
-                          <h2 className="bk-display" style={{ fontSize: 22, fontWeight: 900, color: "#1A1208", marginBottom: 6 }}>{selectedBuddy.name}</h2>
+                          <h2 className="bk-display" style={{ fontSize: 22, fontWeight: 900, color: THEME.darkText, marginBottom: 6 }}>{selectedBuddy.name}</h2>
                           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                            <span style={{ fontSize: 11, background: "rgba(196,98,45,0.08)", color: "#C4622D", padding: "4px 10px", display: "flex", alignItems: "center", gap: 4 }}>
+                            <span style={{ fontSize: 11, background: "rgba(196, 98, 45, 0.08)", color: THEME.brownAccent, padding: "4px 10px", display: "flex", alignItems: "center", gap: 4 }}>
                               <Briefcase style={{ width: 11, height: 11 }} /> {selectedBuddy.experience}
                             </span>
                             <span style={{ fontSize: 11, background: "#FFFBF0", color: "#A16207", padding: "4px 10px", display: "flex", alignItems: "center", gap: 4 }}>
@@ -296,44 +314,44 @@ export default function Guides() {
                           <div className="bk-mono" style={{ fontSize: 9, color: "#B8B0A4", letterSpacing: "0.2em", textTransform: "uppercase", marginBottom: 10 }}>Specialties</div>
                           <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                             {selectedBuddy.specialties.map((s: string, i: number) => (
-                              <span key={i} style={{ fontSize: 11, fontWeight: 600, padding: "4px 12px", background: "#F5F0E8", color: "#C4622D", border: "1px solid rgba(196,98,45,0.2)" }}>{s}</span>
+                              <span key={i} style={{ fontSize: 11, fontWeight: 600, padding: "4px 12px", background: THEME.lightBg, color: THEME.brownAccent, border: `1px solid rgba(196, 98, 45, 0.2)` }}>{s}</span>
                             ))}
                           </div>
                         </div>
                       )}
 
                       {/* Pricing */}
-                      <div style={{ background: "#F5F0E8", border: "1px solid #DDD6C8", padding: "20px" }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12, paddingBottom: 12, borderBottom: "1px solid #DDD6C8" }}>
+                      <div style={{ background: THEME.lightBg, border: `1px solid #DDD6C8`, padding: "20px" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12, paddingBottom: 12, borderBottom: `1px solid #DDD6C8` }}>
                           <div>
                             <div className="bk-mono" style={{ fontSize: 9, color: "#B8B0A4", textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: 4 }}>Service / day</div>
-                            <div className="bk-display" style={{ fontSize: 26, fontWeight: 900, color: "#1A1208" }}>₱{selectedBuddy.pricePerDay}</div>
+                            <div className="bk-display" style={{ fontSize: 26, fontWeight: 900, color: THEME.darkText }}>₱{selectedBuddy.pricePerDay}</div>
                           </div>
                           <div style={{ textAlign: "right" }}>
                             <div className="bk-mono" style={{ fontSize: 9, color: "#B8B0A4", textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: 4 }}>Platform fee</div>
-                            <div className="bk-display" style={{ fontSize: 26, fontWeight: 900, color: "#1A1208" }}>₱49</div>
+                            <div className="bk-display" style={{ fontSize: 26, fontWeight: 900, color: THEME.darkText }}>₱49</div>
                           </div>
                         </div>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
                           <span style={{ fontSize: 12, color: "#B8B0A4" }}>Total estimate</span>
-                          <span className="bk-display" style={{ fontSize: 32, fontWeight: 900, color: "#C4622D" }}>₱{selectedBuddy.pricePerDay + 49}</span>
+                          <span className="bk-display" style={{ fontSize: 32, fontWeight: 900, color: THEME.brownAccent }}>₱{selectedBuddy.pricePerDay + 49}</span>
                         </div>
                       </div>
                     </div>
 
                     <div style={{ padding: "0 28px 28px" }}>
                       <button onClick={handleBook} disabled={isBooking} className="book-btn"
-                        style={{ width: "100%", padding: "16px", background: "#C4622D", color: "#F5F0E8", border: "none", fontSize: 14, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, borderRadius: 2 }}>
+                        style={{ width: "100%", padding: "16px", background: THEME.brownAccent, color: THEME.lightBg, border: "none", fontSize: 14, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, borderRadius: 2 }}>
                         {isBooking
-                          ? <div style={{ width: 18, height: 18, border: "2px solid rgba(245,240,232,0.3)", borderTopColor: "#F5F0E8", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+                          ? <div style={{ width: 18, height: 18, border: "2px solid rgba(245, 240, 232, 0.3)", borderTopColor: THEME.lightBg, borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
                           : <><Calendar style={{ width: 15, height: 15 }} /> Book {selectedBuddy.name.split(' ')[0]}</>
                         }
                       </button>
                     </div>
                   </motion.div>
                 ) : (
-                  <div style={{ background: "#fff", border: "1px solid #DDD6C8", padding: "56px 32px", textAlign: "center" }}>
-                    <div style={{ width: 80, height: 80, borderRadius: "50%", background: "#F5F0E8", border: "2px solid #DDD6C8", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px" }}>
+                  <div style={{ background: "#fff", border: `1px solid #DDD6C8`, padding: "56px 32px", textAlign: "center" }}>
+                    <div style={{ width: 80, height: 80, borderRadius: "50%", background: THEME.lightBg, border: "2px solid #DDD6C8", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px" }}>
                       <Users style={{ width: 36, height: 36, color: "#DDD6C8" }} />
                     </div>
                     <h3 className="bk-display" style={{ fontSize: 24, fontWeight: 700, color: "#DDD6C8", marginBottom: 8 }}>Select a Guide</h3>
