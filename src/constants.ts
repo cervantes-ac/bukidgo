@@ -73,6 +73,98 @@ export const LOCAL_BUDDIES = [
 
 
 export const MOCK_REVIEWS = [
+  // Guide reviews
+  {
+    id: "guide-review1",
+    userId: "user1",
+    userName: "Maria Santos",
+    userPhoto: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=400",
+    targetId: "buddy2",
+    targetType: "guide" as const,
+    rating: 5,
+    title: "Best guide ever!",
+    comment: "Mitch was absolutely amazing! She knew everything about the mountains and made the trek so enjoyable. Highly recommend!",
+    createdAt: "2024-04-10",
+    helpful: 24
+  },
+  {
+    id: "guide-review2",
+    userId: "user2",
+    userName: "Juan Dela Cruz",
+    userPhoto: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=400",
+    targetId: "buddy3",
+    targetType: "guide" as const,
+    rating: 5,
+    title: "Waterfall paradise!",
+    comment: "Rejean took us to the most beautiful waterfalls. The experience was unforgettable and she was very knowledgeable about the area.",
+    createdAt: "2024-04-08",
+    helpful: 18
+  },
+  {
+    id: "guide-review3",
+    userId: "user3",
+    userName: "Ana Reyes",
+    userPhoto: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&q=80&w=400",
+    targetId: "buddy1",
+    targetType: "guide" as const,
+    rating: 5,
+    title: "Perfect cultural experience",
+    comment: "Christine shared so much about Bukidnon's agriculture and history. A truly enriching experience!",
+    createdAt: "2024-04-09",
+    helpful: 31
+  },
+  {
+    id: "guide-review4",
+    userId: "user4",
+    userName: "Carlos Mendoza",
+    userPhoto: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=400",
+    targetId: "buddy4",
+    targetType: "guide" as const,
+    rating: 4,
+    title: "Great storyteller",
+    comment: "Yyan's stories about Kaamulan traditions were captivating. Would definitely book again!",
+    createdAt: "2024-04-07",
+    helpful: 15
+  },
+  {
+    id: "guide-review5",
+    userId: "user5",
+    userName: "Rosa Garcia",
+    userPhoto: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=400",
+    targetId: "buddy5",
+    targetType: "guide" as const,
+    rating: 5,
+    title: "Heritage expert",
+    comment: "Uriah's knowledge of religious and heritage sites is incredible. She made history come alive!",
+    createdAt: "2024-04-06",
+    helpful: 42
+  },
+  {
+    id: "guide-review6",
+    userId: "user6",
+    userName: "Miguel Torres",
+    userPhoto: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=400",
+    targetId: "buddy6",
+    targetType: "guide" as const,
+    rating: 5,
+    title: "Food tour was amazing!",
+    comment: "Jonaira knows all the best local food spots. The Binaki was authentic and delicious!",
+    createdAt: "2024-04-09",
+    helpful: 28
+  },
+  {
+    id: "guide-review7",
+    userId: "user7",
+    userName: "Lisa Fernandez",
+    userPhoto: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=400",
+    targetId: "buddy7",
+    targetType: "guide" as const,
+    rating: 5,
+    title: "Perfect for families",
+    comment: "Daisy was so patient with our kids and found the perfect balance of adventure and safety. Highly recommended!",
+    createdAt: "2024-04-08",
+    helpful: 12
+  },
   // Destination reviews
   {
     id: "review1",

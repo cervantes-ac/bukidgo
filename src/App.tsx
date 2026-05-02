@@ -9,7 +9,7 @@ import Home from "./pages/Home";
 import Explore from "./pages/Explore";
 import ItineraryGenerator from "./pages/ItineraryGenerator";
 import Auth from "./pages/Auth";
-import Guides from "./pages/Guides";
+import Guides from "./pages/Guides.enhanced";
 import Events from "./pages/Events";
 import Food from "./pages/Food";
 import Profile from "./pages/Profile";
