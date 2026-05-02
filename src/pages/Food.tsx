@@ -6,19 +6,25 @@ import { useFirebase } from "../contexts/FirebaseContext";
 import { db, OperationType, handleFirestoreError } from "../lib/firebase";
 import { collection, addDoc, serverTimestamp, onSnapshot } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
+import { useToast, ToastContainer } from "../components/Toast";
 
 const S = `
   @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;0,9..144,900;1,9..144,300;1,9..144,700&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
   .bk-display { font-family: 'Fraunces', Georgia, serif; }
   .bk-mono { font-family: 'JetBrains Mono', monospace; }
-  .food-card { transition: transform 0.25s ease, box-shadow 0.25s ease; }
-  .food-card:hover { transform: translateY(-4px); box-shadow: 0 16px 40px rgba(26,18,8,0.12); }
-  .food-img { transition: transform 0.7s ease; }
-  .food-card:hover .food-img { transform: scale(1.07); }
-  .modal-scroll::-webkit-scrollbar { width: 4px; }
+  .food-card { transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease; position: relative; }
+  .food-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, #C4622D, #D4A853); transform: scaleX(0); transform-origin: left; transition: transform 0.4s ease; z-index: 10; }
+  .food-card:hover { transform: translateY(-8px); box-shadow: 0 24px 48px rgba(26,18,8,0.16); }
+  .food-card:hover::before { transform: scaleX(1); }
+  .food-img { transition: transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1); }
+  .food-card:hover .food-img { transform: scale(1.1); }
+  .modal-scroll::-webkit-scrollbar { width: 6px; }
+  .modal-scroll::-webkit-scrollbar-track { background: #F5F0E8; }
   .modal-scroll::-webkit-scrollbar-thumb { background: #DDD6C8; border-radius: 99px; }
+  .modal-scroll::-webkit-scrollbar-thumb:hover { background: #C4C0B8; }
   input, select { font-family: 'Outfit', system-ui, sans-serif; }
   select option { background: #FAF7F2; }
+  input:focus, select:focus { outline: 2px solid #C4622D; outline-offset: 2px; }
   @keyframes spin { to { transform: rotate(360deg); } }
   .price-badge-low { background: #dcfce7; color: #166534; }
   .price-badge-mid { background: #fef9c3; color: #854d0e; }
@@ -37,6 +43,7 @@ export default function Food() {
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState<"rating" | "price" | "name">("rating");
   const [cuisineTypes, setCuisineTypes] = useState<string[]>([]);
+  const { toasts, addToast, removeToast } = useToast();
 
   useEffect(() => {
     return onSnapshot(collection(db, "foodSpots"), snapshot => {
@@ -107,6 +114,7 @@ export default function Food() {
   return (
     <>
       <style>{S}</style>
+      <ToastContainer toasts={toasts} onClose={removeToast} />
       <div style={{ fontFamily: "'Outfit', system-ui, sans-serif", background: "#F5F0E8", color: "#1A1208", minHeight: "100vh" }}>
 
         {/* Decorative top bar */}
@@ -217,28 +225,18 @@ export default function Food() {
                     onClick={() => setSelectedFood(food as FoodSpot)}>
                     <div style={{ position: "relative", height: 260, overflow: "hidden" }}>
                       <img src={food.image} className="food-img" style={{ width: "100%", height: "100%", objectFit: "cover" }} alt={food.name} />
-                      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(26,18,8,0.8) 0%, rgba(26,18,8,0.1) 55%, transparent 100%)" }} />
-                      <div className={`bk-mono ${priceBadgeClass(food.priceRange)}`} style={{ position: "absolute", top: 14, left: 14, padding: "4px 10px", fontSize: 10, fontWeight: 700, letterSpacing: "0.1em" }}>
+                      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(26,18,8,0.8) 0%, rgba(26,18,8,0.2) 50%, transparent 100%)" }} />
+                      <div className={`bk-mono ${priceBadgeClass(food.priceRange)}`} style={{ position: "absolute", top: 14, left: 14, padding: "6px 12px", fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", borderRadius: 3 }}>
                         {food.priceRange}
                       </div>
-                      <div className="bk-mono" style={{ position: "absolute", top: 14, right: 14, background: "rgba(245,240,232,0.95)", color: "#1A1208", padding: "4px 10px", fontSize: 11, fontWeight: 700, display: "flex", alignItems: "center", gap: 4 }}>
-                        <Star style={{ width: 10, height: 10, fill: "#D4A853", color: "#D4A853" }} /> {food.rating}
+                      <div className="bk-mono" style={{ position: "absolute", top: 14, right: 14, background: "rgba(245,240,232,0.95)", color: "#1A1208", padding: "6px 12px", fontSize: 11, fontWeight: 700, display: "flex", alignItems: "center", gap: 5, borderRadius: 3 }}>
+                        <Star style={{ width: 11, height: 11, fill: "#D4A853", color: "#D4A853" }} /> {food.rating}
                       </div>
-                      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "20px" }}>
-                        <h3 className="bk-display" style={{ fontSize: 22, fontWeight: 900, color: "#F5F0E8", lineHeight: 1.1, marginBottom: 4 }}>{food.name}</h3>
-                        <p style={{ fontSize: 12, color: "rgba(245,240,232,0.6)", display: "flex", alignItems: "center", gap: 4 }}>
-                          <MapPin style={{ width: 12, height: 12 }} /> {food.location.address}
+                      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "24px" }}>
+                        <h3 className="bk-display" style={{ fontSize: "clamp(18px, 4vw, 24px)", fontWeight: 900, color: "#F5F0E8", lineHeight: 1.1, marginBottom: 6 }}>{food.name}</h3>
+                        <p style={{ fontSize: 13, color: "rgba(245,240,232,0.75)", display: "flex", alignItems: "center", gap: 5 }}>
+                          <MapPin style={{ width: 13, height: 13, flexShrink: 0 }} /> {food.location.address}
                         </p>
-                      </div>
-                    </div>
-                    {/* Bottom strip */}
-                    <div style={{ padding: "14px 18px", display: "flex", alignItems: "center", justifyContent: "space-between", borderTop: "1px solid #DDD6C8" }}>
-                      <div>
-                        <p className="bk-display" style={{ fontSize: 16, fontWeight: 700, color: "#1A1208" }}>{food.name}</p>
-                        <p style={{ fontSize: 11, color: "#7A6E61" }}>{food.location.address}</p>
-                      </div>
-                      <div style={{ width: 36, height: 36, background: "#C4622D", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                        <Utensils style={{ width: 16, height: 16, color: "#fff" }} />
                       </div>
                     </div>
                   </motion.div>

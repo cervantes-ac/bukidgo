@@ -6,21 +6,26 @@
   --font-serif: "Playfair Display", Georgia, serif;
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   
-  --color-forest: #1B4332;
-  --color-olive: #2D6A4F;
-  --color-earth: #FFB703;
-  --color-linen: #FEFAE0;
-  --color-stone: #403D39;
-  --color-clay: #D4A373;
+  --color-forest-dark: #0A3D2F;
+  --color-forest: #1E4D2B;
+  --color-forest-light: #2D7A4A;
+  --color-earth: #8B4513;
+  --color-earth-warm: #C4622D;
+  --color-gold: #F5C400;
+  --color-cream: #F5F0E8;
+  --color-cream-light: #F5F5F0;
+  --color-stone: #8a7f70;
+  --color-charcoal: #2d2d2d;
+  --color-border: #DDD6C8;
 }
 
 @layer base {
   body {
-    @apply bg-linen text-stone font-sans;
+    @apply bg-cream-light text-charcoal font-sans;
   }
   
   h1, h2, h3, h4, h5, h6 {
-    @apply font-serif text-forest;
+    @apply font-serif text-forest-dark;
   }
 }
 

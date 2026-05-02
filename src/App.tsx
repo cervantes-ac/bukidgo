@@ -14,6 +14,13 @@ import Events from "./pages/Events";
 import Food from "./pages/Food";
 import Profile from "./pages/Profile";
 import AdminDashboard from "./pages/AdminDashboard";
+import AboutUs from "./pages/AboutUs";
+import Contact from "./pages/Contact";
+import TermsOfService from "./pages/TermsOfService";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import Careers from "./pages/Careers";
+import DestinationDetail from "./pages/DestinationDetail";
+import FoodSpotDetail from "./pages/FoodSpotDetail";
 import { FirebaseProvider, useFirebase } from "./contexts/FirebaseContext";
 
 function AppRoutes() {
@@ -33,13 +40,20 @@ function AppRoutes() {
         <Route path="/" element={<Layout />}>
           <Route index element={<Home />} />
           <Route path="explore" element={<Explore />} />
+          <Route path="destination/:id" element={<DestinationDetail />} />
           <Route path="guides" element={<Guides />} />
           <Route path="events" element={<Events />} />
           <Route path="food" element={<Food />} />
+          <Route path="food/:id" element={<FoodSpotDetail />} />
           <Route path="profile" element={<Profile />} />
           <Route path="admin" element={<AdminDashboard />} />
           <Route path="ai-itinerary" element={<ItineraryGenerator />} />
           <Route path="auth" element={<Auth />} />
+          <Route path="about" element={<AboutUs />} />
+          <Route path="contact" element={<Contact />} />
+          <Route path="terms" element={<TermsOfService />} />
+          <Route path="privacy" element={<PrivacyPolicy />} />
+          <Route path="careers" element={<Careers />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>

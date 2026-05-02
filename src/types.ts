@@ -74,3 +74,38 @@ export interface Event {
   image: string;
   category: 'festival' | 'cultural' | 'sports' | 'community';
 }
+
+export interface Career {
+  id: string;
+  title: string;
+  department: string;
+  location: string;
+  type: 'full-time' | 'part-time' | 'contract' | 'seasonal';
+  description: string;
+  requirements: string[];
+  salary?: string;
+  image: string;
+  postedDate: string;
+}
+
+export interface Review {
+  id: string;
+  userId: string;
+  userName: string;
+  userPhoto?: string;
+  targetId: string;
+  targetType: 'destination' | 'foodSpot' | 'guide';
+  rating: number;
+  title: string;
+  comment: string;
+  createdAt: string;
+  helpful: number;
+}
+
+export interface Favorite {
+  id: string;
+  userId: string;
+  targetId: string;
+  targetType: 'destination' | 'foodSpot' | 'guide';
+  createdAt: string;
+}

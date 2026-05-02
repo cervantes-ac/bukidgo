@@ -1,4 +1,5 @@
-import { MapPin, Instagram, Facebook, Twitter, Mail, Heart, Mountain, ArrowRight } from "lucide-react";
+import { MapPin, Instagram, Facebook, Twitter, Mail, Heart, ArrowRight } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const SHARED_STYLE = `
   @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;0,9..144,900;1,9..144,300;1,9..144,700&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
@@ -12,8 +13,20 @@ const SHARED_STYLE = `
 `;
 
 export default function Footer() {
-  const platformLinks = ["Explore Spots", "Local Buddies", "AI Itinerary", "Events Calendar", "Food Spots"];
-  const companyLinks = ["About Us", "Contact", "Terms of Service", "Privacy Policy", "Careers"];
+  const platformLinks = [
+    { name: "Explore Spots", path: "/explore" },
+    { name: "Local Buddies", path: "/guides" },
+    { name: "AI Itinerary", path: "/ai-itinerary" },
+    { name: "Events Calendar", path: "/events" },
+    { name: "Food Spots", path: "/food" }
+  ];
+  const companyLinks = [
+    { name: "About Us", path: "/about" },
+    { name: "Contact", path: "/contact" },
+    { name: "Terms of Service", path: "/terms" },
+    { name: "Privacy Policy", path: "/privacy" },
+    { name: "Careers", path: "/careers" }
+  ];
 
   return (
     <>
@@ -33,12 +46,15 @@ export default function Footer() {
             {/* Brand */}
             <div style={{ maxWidth: 320 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
-                <div style={{
-                  width: 44, height: 44, borderRadius: 6, background: "#D4A853",
-                  display: "flex", alignItems: "center", justifyContent: "center"
-                }}>
-                  <Mountain style={{ width: 22, height: 22, color: "#1A1208" }} />
-                </div>
+                <img 
+                  src="/img/BukidGO/BukidGO_logo.png" 
+                  alt="BukidGo Logo"
+                  style={{
+                    width: 44,
+                    height: 44,
+                    objectFit: "contain"
+                  }}
+                />
                 <div>
                   <div className="bk-display" style={{ fontSize: 24, fontWeight: 900, color: "#F5F0E8", lineHeight: 1 }}>
                     BukidGo
@@ -66,10 +82,10 @@ export default function Footer() {
                 </div>
                 <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", gap: 10 }}>
                   {platformLinks.map(item => (
-                    <li key={item}>
-                      <a href="#" className="bk-footer-link" style={{ textDecoration: "none", fontSize: 14, color: "rgba(245,240,232,0.45)", fontWeight: 400 }}>
-                        {item}
-                      </a>
+                    <li key={item.name}>
+                      <Link to={item.path} className="bk-footer-link" style={{ textDecoration: "none", fontSize: 14, color: "rgba(245,240,232,0.45)", fontWeight: 400 }}>
+                        {item.name}
+                      </Link>
                     </li>
                   ))}
                 </ul>
@@ -82,10 +98,10 @@ export default function Footer() {
                 </div>
                 <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", gap: 10 }}>
                   {companyLinks.map(item => (
-                    <li key={item}>
-                      <a href="#" className="bk-footer-link" style={{ textDecoration: "none", fontSize: 14, color: "rgba(245,240,232,0.45)", fontWeight: 400 }}>
-                        {item}
-                      </a>
+                    <li key={item.name}>
+                      <Link to={item.path} className="bk-footer-link" style={{ textDecoration: "none", fontSize: 14, color: "rgba(245,240,232,0.45)", fontWeight: 400 }}>
+                        {item.name}
+                      </Link>
                     </li>
                   ))}
                 </ul>

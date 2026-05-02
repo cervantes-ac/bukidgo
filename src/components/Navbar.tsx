@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { auth } from "../lib/firebase";
 import { signOut } from "firebase/auth";
-import { Menu, X, User, Sparkles, Utensils, Calendar, LogOut, Settings, Compass, Users, Mountain } from "lucide-react";
+import { Menu, X, User, Sparkles, Utensils, Calendar, LogOut, Settings, Compass, Users } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useFirebase } from "../contexts/FirebaseContext";
 
@@ -49,12 +49,20 @@ export default function Navbar() {
     navigate("/");
   };
 
-  const navLinks = [
+  const mainNavLinks = [
     { name: "Explore", path: "/explore", icon: Compass },
     { name: "Food", path: "/food", icon: Utensils },
     { name: "Guides", path: "/guides", icon: Users },
     { name: "Events", path: "/events", icon: Calendar },
     { name: "AI Plan", path: "/ai-itinerary", icon: Sparkles },
+  ];
+
+  const companyNavLinks = [
+    { name: "About", path: "/about" },
+    { name: "Contact", path: "/contact" },
+    { name: "Terms", path: "/terms" },
+    { name: "Privacy", path: "/privacy" },
+    { name: "Careers", path: "/careers" },
   ];
 
   // Adjustable styles based on device
@@ -130,18 +138,16 @@ export default function Navbar() {
             
             {/* Logo - adjusts based on device */}
             <Link to="/" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: styles.logoGap }}>
-              <div style={{
-                width: styles.logoSize,
-                height: styles.logoSize,
-                borderRadius: 6,
-                background: "#1A1208",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                flexShrink: 0
-              }}>
-                <Mountain style={{ width: styles.logoIconSize, height: styles.logoIconSize, color: "#D4A853" }} />
-              </div>
+              <img 
+                src="/img/BukidGO/BukidGO_logo.png" 
+                alt="BukidGo Logo"
+                style={{
+                  width: styles.logoSize,
+                  height: styles.logoSize,
+                  objectFit: "contain",
+                  flexShrink: 0
+                }}
+              />
               <div>
                 <div className="bk-display" style={{ 
                   fontSize: styles.logoFontSize, 
@@ -166,63 +172,103 @@ export default function Navbar() {
             {styles.showFullNav && (
               <>
                 <div style={{ display: "flex", alignItems: "center", gap: deviceType === 'tablet' ? 2 : 4 }}>
-                  {navLinks.map((link) => {
-                    const Icon = link.icon;
-                    const isActive = location.pathname === link.path;
-                    return (
-                      <Link
-                        key={link.path}
-                        to={link.path}
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: deviceType === 'tablet' ? 4 : 6,
-                          padding: deviceType === 'tablet' ? "6px 10px" : "8px 14px",
-                          borderRadius: 4,
-                          textDecoration: "none",
-                          fontSize: styles.fontSize,
-                          fontWeight: 500,
-                          transition: "all 0.15s",
-                          background: isActive ? "#1A1208" : "transparent",
-                          color: isActive ? "#F5F0E8" : "#7A6E61",
-                        }}
-                        onMouseEnter={e => { 
-                          if (!isActive) { 
-                            (e.currentTarget as HTMLElement).style.color = "#1A1208"; 
-                            (e.currentTarget as HTMLElement).style.background = "#DDD6C8"; 
-                          } 
-                        }}
-                        onMouseLeave={e => { 
-                          if (!isActive) { 
-                            (e.currentTarget as HTMLElement).style.color = "#7A6E61"; 
-                            (e.currentTarget as HTMLElement).style.background = "transparent"; 
-                          } 
-                        }}
-                      >
-                        <Icon style={{ width: styles.iconSize, height: styles.iconSize }} />
-                        {deviceType === 'tablet' ? (
-                          <span style={{ 
-                            display: 'inline-block', 
-                            width: 60, 
-                            overflow: 'hidden', 
-                            textOverflow: 'ellipsis', 
-                            whiteSpace: 'nowrap' 
-                          }}>
-                            {link.name}
-                          </span>
-                        ) : link.name}
-                        {isActive && (
-                          <div style={{ 
-                            width: deviceType === 'tablet' ? 4 : 5, 
-                            height: deviceType === 'tablet' ? 4 : 5, 
-                            borderRadius: "50%", 
-                            background: "#D4A853", 
-                            marginLeft: 2 
-                          }} />
-                        )}
-                      </Link>
-                    );
-                  })}
+                  {/* Show company links if not logged in, main nav if logged in */}
+                  {!user ? (
+                    companyNavLinks.map((link) => {
+                      const isActive = location.pathname === link.path;
+                      return (
+                        <a
+                          key={link.path}
+                          href={link.path}
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: deviceType === 'tablet' ? 4 : 6,
+                            padding: deviceType === 'tablet' ? "6px 10px" : "8px 14px",
+                            borderRadius: 4,
+                            textDecoration: "none",
+                            fontSize: styles.fontSize,
+                            fontWeight: 500,
+                            transition: "all 0.15s",
+                            background: isActive ? "#1A1208" : "transparent",
+                            color: isActive ? "#F5F0E8" : "#7A6E61",
+                          }}
+                          onMouseEnter={e => { 
+                            if (!isActive) { 
+                              (e.currentTarget as HTMLElement).style.color = "#1A1208"; 
+                              (e.currentTarget as HTMLElement).style.background = "#DDD6C8"; 
+                            } 
+                          }}
+                          onMouseLeave={e => { 
+                            if (!isActive) { 
+                              (e.currentTarget as HTMLElement).style.color = "#7A6E61"; 
+                              (e.currentTarget as HTMLElement).style.background = "transparent"; 
+                            } 
+                          }}
+                        >
+                          {link.name}
+                        </a>
+                      );
+                    })
+                  ) : (
+                    mainNavLinks.map((link) => {
+                      const Icon = link.icon;
+                      const isActive = location.pathname === link.path;
+                      return (
+                        <Link
+                          key={link.path}
+                          to={link.path}
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: deviceType === 'tablet' ? 4 : 6,
+                            padding: deviceType === 'tablet' ? "6px 10px" : "8px 14px",
+                            borderRadius: 4,
+                            textDecoration: "none",
+                            fontSize: styles.fontSize,
+                            fontWeight: 500,
+                            transition: "all 0.15s",
+                            background: isActive ? "#1A1208" : "transparent",
+                            color: isActive ? "#F5F0E8" : "#7A6E61",
+                          }}
+                          onMouseEnter={e => { 
+                            if (!isActive) { 
+                              (e.currentTarget as HTMLElement).style.color = "#1A1208"; 
+                              (e.currentTarget as HTMLElement).style.background = "#DDD6C8"; 
+                            } 
+                          }}
+                          onMouseLeave={e => { 
+                            if (!isActive) { 
+                              (e.currentTarget as HTMLElement).style.color = "#7A6E61"; 
+                              (e.currentTarget as HTMLElement).style.background = "transparent"; 
+                            } 
+                          }}
+                        >
+                          <Icon style={{ width: styles.iconSize, height: styles.iconSize }} />
+                          {deviceType === 'tablet' ? (
+                            <span style={{ 
+                              display: 'inline-block', 
+                              width: 60, 
+                              overflow: 'hidden', 
+                              textOverflow: 'ellipsis', 
+                              whiteSpace: 'nowrap' 
+                            }}>
+                              {link.name}
+                            </span>
+                          ) : link.name}
+                          {isActive && (
+                            <div style={{ 
+                              width: deviceType === 'tablet' ? 4 : 5, 
+                              height: deviceType === 'tablet' ? 4 : 5, 
+                              borderRadius: "50%", 
+                              background: "#D4A853", 
+                              marginLeft: 2 
+                            }} />
+                          )}
+                        </Link>
+                      );
+                    })
+                  )}
 
                   {isAdmin && (
                     <Link
@@ -384,32 +430,60 @@ export default function Navbar() {
               style={{ overflow: "hidden", borderTop: "1px solid #DDD6C8", background: "#F5F0E8" }}
             >
               <div style={{ padding: "16px 24px", display: "flex", flexDirection: "column", gap: 4 }}>
-                {navLinks.map((link) => {
-                  const Icon = link.icon;
-                  const isActive = location.pathname === link.path;
-                  return (
-                    <Link
-                      key={link.path}
-                      to={link.path}
-                      onClick={() => setIsOpen(false)}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 10,
-                        padding: "12px 16px",
-                        borderRadius: 4,
-                        textDecoration: "none",
-                        fontSize: 15,
-                        fontWeight: 500,
-                        background: isActive ? "#1A1208" : "transparent",
-                        color: isActive ? "#F5F0E8" : "#1A1208",
-                      }}
-                    >
-                      <Icon style={{ width: 18, height: 18 }} />
-                      {link.name}
-                    </Link>
-                  );
-                })}
+                {/* Show company links if not logged in, main nav if logged in */}
+                {!user ? (
+                  companyNavLinks.map((link) => {
+                    const isActive = location.pathname === link.path;
+                    return (
+                      <a
+                        key={link.path}
+                        href={link.path}
+                        onClick={() => setIsOpen(false)}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 10,
+                          padding: "12px 16px",
+                          borderRadius: 4,
+                          textDecoration: "none",
+                          fontSize: 15,
+                          fontWeight: 500,
+                          background: isActive ? "#1A1208" : "transparent",
+                          color: isActive ? "#F5F0E8" : "#1A1208",
+                        }}
+                      >
+                        {link.name}
+                      </a>
+                    );
+                  })
+                ) : (
+                  mainNavLinks.map((link) => {
+                    const Icon = link.icon;
+                    const isActive = location.pathname === link.path;
+                    return (
+                      <Link
+                        key={link.path}
+                        to={link.path}
+                        onClick={() => setIsOpen(false)}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 10,
+                          padding: "12px 16px",
+                          borderRadius: 4,
+                          textDecoration: "none",
+                          fontSize: 15,
+                          fontWeight: 500,
+                          background: isActive ? "#1A1208" : "transparent",
+                          color: isActive ? "#F5F0E8" : "#1A1208",
+                        }}
+                      >
+                        <Icon style={{ width: 18, height: 18 }} />
+                        {link.name}
+                      </Link>
+                    );
+                  })
+                )}
                 <div style={{ borderTop: "1px solid #DDD6C8", marginTop: 8, paddingTop: 8 }}>
                   {user ? (
                     <>

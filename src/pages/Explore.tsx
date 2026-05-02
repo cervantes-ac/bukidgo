@@ -11,16 +11,23 @@ const S = `
   @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;0,9..144,900;1,9..144,300;1,9..144,700&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
   .bk-display { font-family: 'Fraunces', Georgia, serif; }
   .bk-mono { font-family: 'JetBrains Mono', monospace; }
-  .ex-card { transition: transform 0.25s ease, box-shadow 0.25s ease; }
-  .ex-card:hover { transform: translateY(-4px); box-shadow: 0 16px 40px rgba(26,18,8,0.12); }
-  .ex-img { transition: transform 0.7s ease; }
-  .ex-card:hover .ex-img { transform: scale(1.07); }
-  .tab-btn { transition: all 0.15s; }
-  .modal-scroll::-webkit-scrollbar { width: 4px; }
+  .ex-card { transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease; position: relative; }
+  .ex-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, #4A7C59, #D4A853); transform: scaleX(0); transform-origin: left; transition: transform 0.4s ease; z-index: 10; }
+  .ex-card:hover { transform: translateY(-8px); box-shadow: 0 24px 48px rgba(26,18,8,0.16); }
+  .ex-card:hover::before { transform: scaleX(1); }
+  .ex-img { transition: transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1); }
+  .ex-card:hover .ex-img { transform: scale(1.1); }
+  .tab-btn { transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); }
+  .tab-btn:focus-visible { outline: 2px solid #4A7C59; outline-offset: 2px; }
+  .modal-scroll::-webkit-scrollbar { width: 6px; }
+  .modal-scroll::-webkit-scrollbar-track { background: #F5F0E8; }
   .modal-scroll::-webkit-scrollbar-thumb { background: #DDD6C8; border-radius: 99px; }
+  .modal-scroll::-webkit-scrollbar-thumb:hover { background: #C4C0B8; }
   input, select { font-family: 'Outfit', system-ui, sans-serif; }
   select option { background: #F5F0E8; }
+  input:focus, select:focus { outline: 2px solid #4A7C59; outline-offset: 2px; }
   @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
 `;
 
 const CAT_COLORS: Record<string, string> = {
@@ -219,30 +226,32 @@ export default function Explore() {
                         }}>
                         <div style={{ position: "relative", height: 260, overflow: "hidden" }}>
                           <img src={item.images[0]} className="ex-img" style={{ width: "100%", height: "100%", objectFit: "cover" }} alt={item.name} />
-                          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(26,18,8,0.6) 0%, transparent 55%)" }} />
-                          <div style={{ position: "absolute", top: 14, left: 14, background: catColor + "20", color: catColor, border: `1px solid ${catColor}40`, padding: "4px 10px", fontSize: 9, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", backdropFilter: "blur(6px)" }} className="bk-mono">
+                          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(26,18,8,0.7) 0%, rgba(26,18,8,0.2) 50%, transparent 100%)" }} />
+                          <div style={{ position: "absolute", top: 14, left: 14, background: catColor + "20", color: catColor, border: `1px solid ${catColor}60`, padding: "6px 12px", fontSize: 10, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", backdropFilter: "blur(8px)", borderRadius: 3 }} className="bk-mono">
                             {item.category}
                           </div>
-                          <div className="bk-mono" style={{ position: "absolute", top: 14, right: 14, background: "rgba(245,240,232,0.95)", color: "#1A1208", padding: "4px 10px", fontSize: 11, fontWeight: 700, display: "flex", alignItems: "center", gap: 4 }}>
-                            <Star style={{ width: 10, height: 10, fill: "#D4A853", color: "#D4A853" }} /> {item.rating}
+                          <div className="bk-mono" style={{ position: "absolute", top: 14, right: 14, background: "rgba(245,240,232,0.95)", color: "#1A1208", padding: "6px 12px", fontSize: 11, fontWeight: 700, display: "flex", alignItems: "center", gap: 5, borderRadius: 3 }}>
+                            <Star style={{ width: 11, height: 11, fill: "#D4A853", color: "#D4A853" }} /> {item.rating}
                           </div>
                         </div>
-                        <div style={{ padding: "20px 22px" }}>
-                          <h3 className="bk-display" style={{ fontSize: 20, fontWeight: 700, color: "#1A1208", marginBottom: 4, lineHeight: 1.1 }}>{item.name}</h3>
-                          <p style={{ fontSize: 12, color: "#7A6E61", marginBottom: 10, display: "flex", alignItems: "center", gap: 4 }}>
-                            <MapPin style={{ width: 12, height: 12, color: catColor }} /> {item.location.address}
+                        <div style={{ padding: "24px" }}>
+                          <h3 className="bk-display" style={{ fontSize: "clamp(18px, 4vw, 22px)", fontWeight: 700, color: "#1A1208", marginBottom: 6, lineHeight: 1.2 }}>{item.name}</h3>
+                          <p style={{ fontSize: 13, color: "#7A6E61", marginBottom: 12, display: "flex", alignItems: "center", gap: 5 }}>
+                            <MapPin style={{ width: 13, height: 13, color: catColor, flexShrink: 0 }} /> {item.location.address}
                           </p>
                           <p style={{ fontSize: 13, color: "#7A6E61", fontWeight: 300, lineHeight: 1.5, marginBottom: 16, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
                             {item.description}
                           </p>
-                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: 14, borderTop: "1px solid #DDD6C8" }}>
-                            <span style={{ fontSize: 12, fontWeight: 700, color: catColor, background: catColor + "12", padding: "4px 10px" }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: 14, borderTop: "1px solid #EEE8DC" }}>
+                            <span style={{ fontSize: 12, fontWeight: 700, color: catColor, background: catColor + "12", padding: "6px 12px", borderRadius: 3 }}>
                               {'isFood' in item ? (item as any).priceRange : `₱${item.entranceFee}`}
                             </span>
                             <a href={`https://www.google.com/maps/dir/?api=1&destination=${item.location.lat},${item.location.lng}`}
                               target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()}
-                              style={{ width: 34, height: 34, border: "1px solid #DDD6C8", display: "flex", alignItems: "center", justifyContent: "center", color: "#7A6E61", textDecoration: "none" }}>
-                              <Navigation style={{ width: 15, height: 15 }} />
+                              style={{ width: 36, height: 36, border: "1px solid #DDD6C8", display: "flex", alignItems: "center", justifyContent: "center", color: "#7A6E61", textDecoration: "none", borderRadius: 3, transition: "all 0.2s", cursor: "pointer" }}
+                              onMouseEnter={e => { e.currentTarget.style.background = catColor + "12"; e.currentTarget.style.borderColor = catColor; e.currentTarget.style.color = catColor; }}
+                              onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.borderColor = "#DDD6C8"; e.currentTarget.style.color = "#7A6E61"; }}>
+                              <Navigation style={{ width: 16, height: 16 }} />
                             </a>
                           </div>
                         </div>

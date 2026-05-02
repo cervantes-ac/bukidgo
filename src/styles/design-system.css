@@ -1,25 +1,30 @@
-/* BukidGo Design System - Unified CSS */
+/* BukidGo Design System - Logo-Inspired Unified CSS */
 
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=DM+Sans:wght@300;400;500;600&family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap');
 
 :root {
-  /* Color Palette */
-  --color-forest: #1a5d1a;
-  --color-earth: #8b4513;
-  --color-sky: #4a90e2;
-  --color-sunset: #ff6b35;
-  --color-linen: #f8f4e5;
-  --color-clay: #d4c9bc;
-  --color-stone: #8a7f70;
-  --color-charcoal: #2d2d2d;
+  /* Color Palette - Logo Inspired */
+  --color-forest-dark: #0A3D2F;      /* Deep forest from logo */
+  --color-forest: #1E4D2B;           /* Rich forest green */
+  --color-forest-light: #2D7A4A;     /* Mountain green */
+  --color-earth: #8B4513;            /* Warm earth brown */
+  --color-earth-warm: #C4622D;       /* Warm brown accent */
+  --color-gold: #F5C400;             /* Golden accent */
+  --color-gold-muted: #D4A574;       /* Muted golden */
+  --color-cream: #F5F0E8;            /* Warm cream */
+  --color-cream-light: #F5F5F0;      /* Light cream */
+  --color-stone: #8a7f70;            /* Neutral stone */
+  --color-charcoal: #2d2d2d;         /* Dark text */
+  --color-brown-dark: #1A1208;       /* Very dark brown */
+  --color-border: #DDD6C8;           /* Warm border */
   --color-white: #ffffff;
   --color-black: #000000;
   
   /* Gradients */
-  --gradient-nature-sky: linear-gradient(135deg, var(--color-forest), var(--color-sky));
-  --gradient-earth-sunset: linear-gradient(135deg, var(--color-earth), var(--color-sunset));
-  --gradient-sky-forest: linear-gradient(135deg, var(--color-sky), var(--color-forest));
-  --gradient-subtle: linear-gradient(135deg, rgba(26,93,26,0.1), rgba(74,144,226,0.1));
+  --gradient-forest: linear-gradient(135deg, var(--color-forest-dark), var(--color-forest));
+  --gradient-earth-gold: linear-gradient(135deg, var(--color-earth), var(--color-gold));
+  --gradient-forest-warm: linear-gradient(135deg, var(--color-forest), var(--color-earth-warm));
+  --gradient-subtle: linear-gradient(135deg, rgba(10,61,47,0.1), rgba(196,98,45,0.1));
   
   /* Typography */
   --font-heading: 'Playfair Display', serif;
@@ -63,11 +68,11 @@
   --radius-full: 9999px;
   
   /* Shadows */
-  --shadow-sm: 0 2px 8px rgba(0,0,0,0.08);
-  --shadow-md: 0 4px 16px rgba(0,0,0,0.12);
-  --shadow-lg: 0 8px 32px rgba(0,0,0,0.16);
-  --shadow-glow: 0 0 20px rgba(26,93,26,0.15);
-  --shadow-glow-blue: 0 0 20px rgba(74,144,226,0.15);
+  --shadow-sm: 0 2px 8px rgba(10,61,47,0.08);
+  --shadow-md: 0 4px 16px rgba(10,61,47,0.12);
+  --shadow-lg: 0 8px 32px rgba(10,61,47,0.16);
+  --shadow-glow: 0 0 20px rgba(10,61,47,0.15);
+  --shadow-glow-gold: 0 0 20px rgba(245,196,0,0.15);
   
   /* Animation */
   --transition-base: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -91,7 +96,7 @@
 body {
   font-family: var(--font-body);
   color: var(--color-charcoal);
-  background-color: var(--color-linen);
+  background-color: var(--color-cream-light);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -103,6 +108,7 @@ h1, h2, h3, h4, h5, h6 {
   font-weight: 700;
   line-height: 1.2;
   margin-bottom: var(--space-4);
+  color: var(--color-forest-dark);
 }
 
 h1 { font-size: var(--text-h1); }
@@ -181,7 +187,7 @@ h3 { font-size: var(--text-h3); }
 }
 
 .btn-primary {
-  background: var(--gradient-nature-sky);
+  background: var(--gradient-forest);
   color: var(--color-white);
   box-shadow: var(--shadow-md);
 }
@@ -193,12 +199,12 @@ h3 { font-size: var(--text-h3); }
 
 .btn-secondary {
   background: transparent;
-  color: var(--color-forest);
-  border: 2px solid var(--color-forest);
+  color: var(--color-forest-dark);
+  border: 2px solid var(--color-forest-dark);
 }
 
 .btn-secondary:hover {
-  background: rgba(26,93,26,0.05);
+  background: rgba(10,61,47,0.05);
   transform: translateY(-1px);
 }
 
@@ -209,13 +215,13 @@ h3 { font-size: var(--text-h3); }
 }
 
 .btn-tertiary:hover {
-  color: var(--color-forest);
+  color: var(--color-forest-dark);
 }
 
 /* Cards */
 .card {
   background: var(--color-white);
-  border: 1px solid var(--color-clay);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   padding: var(--space-6);
   box-shadow: var(--shadow-sm);
@@ -225,7 +231,7 @@ h3 { font-size: var(--text-h3); }
 .card:hover {
   transform: translateY(-4px);
   box-shadow: var(--shadow-lg);
-  border-color: var(--color-forest);
+  border-color: var(--color-forest-dark);
 }
 
 .card-lg {
@@ -243,7 +249,7 @@ h3 { font-size: var(--text-h3); }
   width: 100%;
   padding: var(--space-4) var(--space-6);
   background: var(--color-white);
-  border: 1px solid var(--color-clay);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   font-family: var(--font-body);
   font-size: var(--text-body);
@@ -253,8 +259,8 @@ h3 { font-size: var(--text-h3); }
 
 .input:focus {
   outline: none;
-  border-color: var(--color-forest);
-  box-shadow: 0 0 0 3px rgba(26,93,26,0.1);
+  border-color: var(--color-forest-dark);
+  box-shadow: 0 0 0 3px rgba(10,61,47,0.1);
 }
 
 .input::placeholder {
@@ -275,21 +281,21 @@ h3 { font-size: var(--text-h3); }
 }
 
 .badge-primary {
-  background: rgba(26,93,26,0.1);
-  color: var(--color-forest);
-  border: 1px solid rgba(26,93,26,0.2);
+  background: rgba(10,61,47,0.1);
+  color: var(--color-forest-dark);
+  border: 1px solid rgba(10,61,47,0.2);
 }
 
 .badge-secondary {
-  background: rgba(74,144,226,0.1);
-  color: var(--color-sky);
-  border: 1px solid rgba(74,144,226,0.2);
+  background: rgba(196,98,45,0.1);
+  color: var(--color-earth-warm);
+  border: 1px solid rgba(196,98,45,0.2);
 }
 
 .badge-accent {
-  background: rgba(255,107,53,0.1);
-  color: var(--color-sunset);
-  border: 1px solid rgba(255,107,53,0.2);
+  background: rgba(245,196,0,0.1);
+  color: var(--color-gold);
+  border: 1px solid rgba(245,196,0,0.2);
 }
 
 /* Icons */
@@ -382,23 +388,26 @@ h3 { font-size: var(--text-h3); }
 .font-semibold { font-weight: 600; }
 .font-medium { font-weight: 500; }
 
+.text-forest-dark { color: var(--color-forest-dark); }
 .text-forest { color: var(--color-forest); }
 .text-earth { color: var(--color-earth); }
-.text-sky { color: var(--color-sky); }
-.text-sunset { color: var(--color-sunset); }
+.text-earth-warm { color: var(--color-earth-warm); }
+.text-gold { color: var(--color-gold); }
 .text-stone { color: var(--color-stone); }
 .text-charcoal { color: var(--color-charcoal); }
 .text-white { color: var(--color-white); }
 
+.bg-forest-dark { background-color: var(--color-forest-dark); }
 .bg-forest { background-color: var(--color-forest); }
 .bg-earth { background-color: var(--color-earth); }
-.bg-sky { background-color: var(--color-sky); }
-.bg-sunset { background-color: var(--color-sunset); }
-.bg-linen { background-color: var(--color-linen); }
+.bg-earth-warm { background-color: var(--color-earth-warm); }
+.bg-gold { background-color: var(--color-gold); }
+.bg-cream { background-color: var(--color-cream); }
 .bg-white { background-color: var(--color-white); }
 
-.bg-gradient-nature-sky { background: var(--gradient-nature-sky); }
-.bg-gradient-earth-sunset { background: var(--gradient-earth-sunset); }
+.bg-gradient-forest { background: var(--gradient-forest); }
+.bg-gradient-earth-gold { background: var(--gradient-earth-gold); }
+.bg-gradient-forest-warm { background: var(--gradient-forest-warm); }
 .bg-gradient-subtle { background: var(--gradient-subtle); }
 
 .rounded-md { border-radius: var(--radius-md); }
@@ -410,6 +419,7 @@ h3 { font-size: var(--text-h3); }
 .shadow-md { box-shadow: var(--shadow-md); }
 .shadow-lg { box-shadow: var(--shadow-lg); }
 .shadow-glow { box-shadow: var(--shadow-glow); }
+.shadow-glow-gold { box-shadow: var(--shadow-glow-gold); }
 
 .transition-all { transition: all var(--transition-base); }
 .transition-transform { transition: transform var(--transition-base); }
@@ -459,7 +469,7 @@ h3 { font-size: var(--text-h3); }
 }
 
 :focus-visible {
-  outline: 2px solid var(--color-forest);
+  outline: 2px solid var(--color-forest-dark);
   outline-offset: 2px;
 }
 
@@ -469,14 +479,14 @@ h3 { font-size: var(--text-h3); }
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--color-linen);
+  background: var(--color-cream-light);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--color-clay);
+  background: var(--color-border);
   border-radius: var(--radius-full);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--color-stone);
+  background: var(--color-earth-warm);
 }

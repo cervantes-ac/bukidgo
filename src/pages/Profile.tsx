@@ -1,223 +1,218 @@
-import { auth, db } from "../lib/firebase";
-import { onAuthStateChanged } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
-import { useEffect, useState } from "react";
-import { User, Settings, History, MapPin, Shield, ArrowUpRight, Mountain, LogOut } from "lucide-react";
-import { motion } from "motion/react";
-import { signOut } from "firebase/auth";
+import { User, Mail, MapPin, Calendar, LogOut, Edit2, Heart, Bookmark, Settings, ArrowUpRight, X, Check } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
+import { useState } from "react";
+import { useFirebase } from "../contexts/FirebaseContext";
 import { useNavigate } from "react-router-dom";
+import { signOut } from "firebase/auth";
+import { auth } from "../lib/firebase";
 
 const S = `
   @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;0,9..144,900;1,9..144,300;1,9..144,700&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
   .bk-display { font-family: 'Fraunces', Georgia, serif; }
   .bk-mono { font-family: 'JetBrains Mono', monospace; }
-  .nav-item {
-    display: flex; align-items: center; gap: 10px;
-    padding: 12px 16px; font-family: 'Outfit', sans-serif;
-    font-size: 14px; font-weight: 500; cursor: pointer;
-    background: none; border: none; width: 100%; text-align: left;
-    transition: all 0.15s; border-radius: 2px; color: #7A6E61;
-  }
-  .nav-item:hover { background: #EDE7DC; color: #1A1208; }
-  .nav-item.active { background: #1A1208; color: #F5F0E8; }
-  .stat-card {
-    background: #fff; border: 1px solid #DDD6C8;
-    padding: 28px 24px; text-align: center;
-  }
+  .tab-btn { transition: all 0.15s; }
+  .tab-btn.active { background: #1A1208; color: #F5F0E8; }
+  .modal-scroll::-webkit-scrollbar { width: 4px; }
+  .modal-scroll::-webkit-scrollbar-thumb { background: #DDD6C8; border-radius: 99px; }
 `;
 
-const navItems = [
-  { id: "account", label: "Account", icon: User },
-  { id: "bookings", label: "Bookings", icon: History },
-  { id: "saved", label: "Saved Spots", icon: MapPin },
-  { id: "settings", label: "Settings", icon: Settings },
-];
-
 export default function Profile() {
-  const [user, setUser] = useState<any>(null);
-  const [profile, setProfile] = useState<any>(null);
-  const [activeNav, setActiveNav] = useState("account");
+  const { user } = useFirebase();
   const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState("bookings");
+  const [isEditing, setIsEditing] = useState(false);
+  const [editName, setEditName] = useState(user?.displayName || "");
 
-  useEffect(() => {
-    return onAuthStateChanged(auth, async (u) => {
-      if (u) {
-        setUser(u);
-        const docSnap = await getDoc(doc(db, "users", u.uid));
-        if (docSnap.exists()) setProfile(docSnap.data());
-      }
-    });
-  }, []);
-
-  const handleSignOut = async () => {
+  const handleLogout = async () => {
     await signOut(auth);
-    navigate("/auth");
+    navigate("/");
   };
 
   if (!user) {
     return (
-      <>
-        <style>{S}</style>
-        <div style={{ minHeight: "100vh", background: "#F5F0E8", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Outfit', sans-serif" }}>
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-            style={{ textAlign: "center", maxWidth: 420, padding: "0 24px" }}>
-            <div style={{ width: 80, height: 80, background: "#1A1208", borderRadius: 2, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 24px" }}>
-              <Mountain style={{ width: 36, height: 36, color: "#D4A853" }} />
-            </div>
-            <h2 className="bk-display" style={{ fontSize: 36, fontWeight: 900, color: "#1A1208", marginBottom: 12 }}>Sign In Required</h2>
-            <p style={{ color: "#7A6E61", fontSize: 14, fontWeight: 300, marginBottom: 32, lineHeight: 1.6 }}>
-              Create an account or sign in to manage your profile, bookings, and saved spots.
-            </p>
-            <button onClick={() => navigate("/auth")}
-              style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "#C4622D", color: "#F5F0E8", border: "none", padding: "14px 28px", fontSize: 14, fontWeight: 700, cursor: "pointer", borderRadius: 2 }}>
-              Sign In <ArrowUpRight style={{ width: 16, height: 16 }} />
-            </button>
-          </motion.div>
+      <div style={{ fontFamily: "'Outfit', system-ui, sans-serif", background: "#F5F0E8", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: "2rem" }}>
+        <div style={{ textAlign: "center", maxWidth: 400 }}>
+          <div className="bk-display" style={{ fontSize: 48, fontWeight: 900, color: "#1A1208", marginBottom: 16 }}>Not Signed In</div>
+          <p style={{ fontSize: 16, color: "#7A6E61", marginBottom: 32, lineHeight: 1.7 }}>Sign in to view your profile, bookings, and saved favorites.</p>
+          <button onClick={() => navigate("/auth")}
+            style={{ padding: "14px 32px", background: "#1A1208", color: "#F5F0E8", border: "none", borderRadius: 2, fontSize: 15, fontWeight: 700, cursor: "pointer" }}>
+            Sign In
+          </button>
         </div>
-      </>
+      </div>
     );
   }
 
   return (
     <>
       <style>{S}</style>
-      <div style={{ minHeight: "100vh", background: "#F5F0E8", fontFamily: "'Outfit', sans-serif", color: "#1A1208" }}>
+      <div style={{ fontFamily: "'Outfit', system-ui, sans-serif", background: "#F5F0E8", color: "#1A1208", minHeight: "100vh" }}>
 
-        {/* Hero banner */}
-        <div style={{ background: "#1A1208", position: "relative", overflow: "hidden" }}>
-          <img
-            src="https://images.unsplash.com/photo-1618737849564-1d58ded7804d?auto=format&fit=crop&q=80&w=2000"
-            style={{ width: "100%", height: 220, objectFit: "cover", opacity: 0.2, display: "block" }}
-            alt=""
-          />
-          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, transparent 40%, #1A1208 100%)" }} />
-
-          {/* Profile identity */}
-          <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "0 2rem 32px", maxWidth: 1100, margin: "0 auto" }}>
-            <div style={{ display: "flex", alignItems: "flex-end", gap: 20, flexWrap: "wrap" }}>
-              <div style={{ position: "relative" }}>
-                <img
-                  src={user.photoURL || `https://api.dicebear.com/7.x/initials/svg?seed=${user.displayName || user.email}`}
-                  style={{ width: 88, height: 88, borderRadius: "50%", objectFit: "cover", border: "3px solid #D4A853" }}
-                  alt=""
-                />
-                <div style={{ position: "absolute", bottom: 0, right: 0, width: 24, height: 24, background: "#4A7C59", borderRadius: "50%", border: "2px solid #1A1208", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <Shield style={{ width: 11, height: 11, color: "#fff" }} />
+        {/* Hero */}
+        <div style={{ background: "linear-gradient(135deg, #1A1208 0%, #2A1810 100%)", padding: "72px 2rem 56px", position: "relative", overflow: "hidden" }}>
+          <div style={{ position: "absolute", top: -100, right: -100, width: 500, height: 500, borderRadius: "50%", background: "radial-gradient(circle, rgba(196,98,45,0.1), transparent)" }} />
+          <div style={{ maxWidth: 1280, margin: "0 auto", position: "relative", zIndex: 2 }}>
+            <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "flex-end", gap: 32 }}>
+              <div style={{ display: "flex", alignItems: "flex-end", gap: 24 }}>
+                <div style={{ position: "relative" }}>
+                  <img src={user.photoURL || "https://via.placeholder.com/120"} style={{ width: 120, height: 120, borderRadius: "50%", objectFit: "cover", border: "4px solid #D4A853" }} alt={user.displayName || "User"} />
+                  <div style={{ position: "absolute", bottom: 0, right: 0, width: 36, height: 36, borderRadius: "50%", background: "#D4A853", border: "3px solid #1A1208", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+                    <Edit2 style={{ width: 16, height: 16, color: "#1A1208" }} />
+                  </div>
+                </div>
+                <div>
+                  <h1 className="bk-display" style={{ fontSize: 40, fontWeight: 900, color: "#F5F0E8", lineHeight: 1 }}>{user.displayName || "Traveler"}</h1>
+                  <p className="bk-mono" style={{ fontSize: 11, color: "rgba(245,240,232,0.4)", letterSpacing: "0.2em", textTransform: "uppercase", marginTop: 6 }}>Member since 2024</p>
                 </div>
               </div>
-              <div style={{ paddingBottom: 4 }}>
-                <h1 className="bk-display" style={{ fontSize: 32, fontWeight: 900, color: "#F5F0E8", lineHeight: 1, marginBottom: 4 }}>
-                  {user.displayName || "Explorer"}
-                </h1>
-                <p className="bk-mono" style={{ fontSize: 11, color: "rgba(245,240,232,0.4)", letterSpacing: "0.15em" }}>{user.email}</p>
-              </div>
-              <div style={{ marginLeft: "auto", paddingBottom: 4 }}>
-                <span style={{ display: "inline-block", background: "rgba(212,168,83,0.15)", border: "1px solid rgba(212,168,83,0.3)", color: "#D4A853", padding: "6px 14px", fontSize: 11, fontWeight: 700, borderRadius: 2, textTransform: "uppercase", letterSpacing: "0.1em" }}>
-                  {profile?.role || "Member"}
-                </span>
-              </div>
+              <button onClick={handleLogout}
+                style={{ display: "flex", alignItems: "center", gap: 8, padding: "12px 24px", background: "rgba(245,240,232,0.1)", border: "1px solid rgba(245,240,232,0.2)", color: "#F5F0E8", borderRadius: 2, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
+                <LogOut style={{ width: 16, height: 16 }} /> Logout
+              </button>
             </div>
           </div>
         </div>
 
-        {/* Main content */}
-        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "48px 2rem 80px" }}>
-          <div style={{ display: "grid", gridTemplateColumns: "220px 1fr", gap: 32, alignItems: "start" }}>
+        {/* Content */}
+        <div style={{ maxWidth: 1280, margin: "0 auto", padding: "48px 2rem 80px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "300px 1fr", gap: 32 }}>
+            {/* Sidebar */}
+            <div>
+              <div style={{ background: "#fff", border: "1px solid #DDD6C8", borderRadius: 2, overflow: "hidden" }}>
+                <div style={{ padding: "24px", borderBottom: "1px solid #DDD6C8" }}>
+                  <h3 className="bk-display" style={{ fontSize: 18, fontWeight: 700, color: "#1A1208", marginBottom: 16 }}>Account</h3>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: "#FAF7F2", borderRadius: 2 }}>
+                      <Mail style={{ width: 16, height: 16, color: "#C4622D" }} />
+                      <span style={{ fontSize: 13, color: "#7A6E61", wordBreak: "break-all" }}>{user.email}</span>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: "#FAF7F2", borderRadius: 2 }}>
+                      <Calendar style={{ width: 16, height: 16, color: "#C4622D" }} />
+                      <span style={{ fontSize: 13, color: "#7A6E61" }}>Joined 2024</span>
+                    </div>
+                  </div>
+                </div>
 
-            {/* Sidebar nav */}
-            <div style={{ background: "#fff", border: "1px solid #DDD6C8", padding: "12px", position: "sticky", top: 100 }}>
-              {navItems.map(({ id, label, icon: Icon }) => (
-                <button key={id} className={`nav-item ${activeNav === id ? "active" : ""}`} onClick={() => setActiveNav(id)}>
-                  <Icon style={{ width: 16, height: 16 }} />
-                  {label}
-                </button>
-              ))}
-              <div style={{ borderTop: "1px solid #DDD6C8", marginTop: 8, paddingTop: 8 }}>
-                <button className="nav-item" onClick={handleSignOut} style={{ color: "#C4622D" }}>
-                  <LogOut style={{ width: 16, height: 16 }} />
-                  Sign Out
-                </button>
+                <div style={{ padding: "24px" }}>
+                  <h3 className="bk-display" style={{ fontSize: 18, fontWeight: 700, color: "#1A1208", marginBottom: 16 }}>Quick Stats</h3>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                    {[["Bookings", "3"], ["Favorites", "12"], ["Reviews", "2"]].map(([label, val]) => (
+                      <div key={label as string} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px", background: "#FAF7F2", borderRadius: 2 }}>
+                        <span style={{ fontSize: 13, color: "#7A6E61", fontWeight: 500 }}>{label}</span>
+                        <span className="bk-display" style={{ fontSize: 18, fontWeight: 700, color: "#C4622D" }}>{val}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
+
+              <button style={{ width: "100%", marginTop: 16, padding: "12px", background: "#FAF7F2", border: "1px solid #DDD6C8", borderRadius: 2, fontSize: 14, fontWeight: 600, color: "#1A1208", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                <Settings style={{ width: 16, height: 16 }} /> Settings
+              </button>
             </div>
 
-            {/* Content panel */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-
-              {/* Member Status */}
-              <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-                style={{ background: "#fff", border: "1px solid #DDD6C8", padding: "32px" }}>
-                <div className="bk-mono" style={{ fontSize: 9, color: "#7A6E61", letterSpacing: "0.25em", textTransform: "uppercase", marginBottom: 20, display: "flex", alignItems: "center", gap: 8 }}>
-                  <Shield style={{ width: 12, height: 12, color: "#C4622D" }} /> Member Status
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
-                  <span style={{ background: "#1A1208", color: "#D4A853", padding: "8px 18px", fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", borderRadius: 2 }}>
-                    {profile?.role || "User"}
-                  </span>
-                  <span className="bk-mono" style={{ fontSize: 11, color: "#B8B0A4" }}>
-                    Member since {new Date(profile?.createdAt || Date.now()).toLocaleDateString("en-PH", { year: "numeric", month: "long" })}
-                  </span>
-                </div>
-              </motion.div>
-
-              {/* Travel Stats */}
-              <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-                style={{ background: "#fff", border: "1px solid #DDD6C8", padding: "32px" }}>
-                <div className="bk-mono" style={{ fontSize: 9, color: "#7A6E61", letterSpacing: "0.25em", textTransform: "uppercase", marginBottom: 20 }}>
-                  Travel Statistics
-                </div>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 2 }}>
-                  {[
-                    { val: "0", label: "Trips", color: "#C4622D" },
-                    { val: "0", label: "Reviews", color: "#D4A853" },
-                    { val: "0", label: "Bookings", color: "#4A7C59" },
-                    { val: "0", label: "Saved Spots", color: "#1A1208" },
-                  ].map(({ val, label, color }) => (
-                    <div key={label} className="stat-card">
-                      <div className="bk-display" style={{ fontSize: 40, fontWeight: 900, color, lineHeight: 1, marginBottom: 6 }}>{val}</div>
-                      <div className="bk-mono" style={{ fontSize: 9, color: "#B8B0A4", letterSpacing: "0.2em", textTransform: "uppercase" }}>{label}</div>
-                    </div>
-                  ))}
-                </div>
-              </motion.div>
-
-              {/* Account info */}
-              <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
-                style={{ background: "#fff", border: "1px solid #DDD6C8", padding: "32px" }}>
-                <div className="bk-mono" style={{ fontSize: 9, color: "#7A6E61", letterSpacing: "0.25em", textTransform: "uppercase", marginBottom: 20 }}>
-                  Account Details
-                </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
-                  {[
-                    { label: "Display Name", value: user.displayName || "Not set" },
-                    { label: "Email Address", value: user.email },
-                    { label: "Auth Provider", value: profile?.provider || "email" },
-                    { label: "Last Login", value: new Date(profile?.lastLoginAt || Date.now()).toLocaleString() },
-                  ].map(({ label, value }) => (
-                    <div key={label} style={{ display: "flex", justifyContent: "space-between", padding: "14px 0", borderBottom: "1px solid #F5F0E8" }}>
-                      <span className="bk-mono" style={{ fontSize: 10, color: "#B8B0A4", letterSpacing: "0.15em", textTransform: "uppercase" }}>{label}</span>
-                      <span style={{ fontSize: 14, color: "#1A1208", fontWeight: 500 }}>{value}</span>
-                    </div>
-                  ))}
-                </div>
-              </motion.div>
-
-              {/* Quick links */}
-              <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-                style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
-                {[
-                  { label: "Explore Destinations", href: "/explore", color: "#C4622D" },
-                  { label: "Find Local Guides", href: "/guides", color: "#4A7C59" },
-                  { label: "Browse Events", href: "/events", color: "#D4A853" },
-                  { label: "Generate Itinerary", href: "/itinerary", color: "#1A1208" },
-                ].map(({ label, href, color }) => (
-                  <a key={href} href={href}
-                    style={{ background: color, color: "#F5F0E8", padding: "20px 24px", textDecoration: "none", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                    <span className="bk-display" style={{ fontSize: 17, fontWeight: 700 }}>{label}</span>
-                    <ArrowUpRight style={{ width: 18, height: 18 }} />
-                  </a>
+            {/* Main */}
+            <div>
+              {/* Tabs */}
+              <div style={{ display: "flex", gap: 8, marginBottom: 32, borderBottom: "1px solid #DDD6C8", paddingBottom: 16 }}>
+                {[["bookings", "Bookings"], ["favorites", "Favorites"], ["reviews", "Reviews"]].map(([tab, label]) => (
+                  <button key={tab as string} onClick={() => setActiveTab(tab as string)} className="tab-btn"
+                    style={{
+                      padding: "10px 16px", borderRadius: 2, fontSize: 14, fontWeight: 600, cursor: "pointer",
+                      background: activeTab === tab ? "#1A1208" : "transparent",
+                      color: activeTab === tab ? "#F5F0E8" : "#7A6E61",
+                      border: activeTab === tab ? "1px solid #1A1208" : "1px solid transparent",
+                      transition: "all 0.15s",
+                    }}>
+                    {label}
+                  </button>
                 ))}
-              </motion.div>
+              </div>
 
+              {/* Bookings */}
+              {activeTab === "bookings" && (
+                <div>
+                  <h2 className="bk-display" style={{ fontSize: 28, fontWeight: 900, color: "#1A1208", marginBottom: 24 }}>Your Bookings</h2>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 3 }}>
+                    {[
+                      { name: "Mount Kitanglad Trek", date: "March 15, 2024", status: "confirmed", type: "destination" },
+                      { name: "Dahilayan Adventure Park", date: "April 2, 2024", status: "pending", type: "destination" },
+                      { name: "Binaki Cooking Class", date: "March 20, 2024", status: "confirmed", type: "food" }
+                    ].map((booking, i) => (
+                      <motion.div key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
+                        style={{ background: "#fff", border: "1px solid #DDD6C8", borderRadius: 2, padding: "20px", cursor: "pointer", transition: "all 0.2s" }}
+                        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = "translateY(-4px)"; (e.currentTarget as HTMLElement).style.boxShadow = "0 12px 32px rgba(26,18,8,0.1)"; }}
+                        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = "translateY(0)"; (e.currentTarget as HTMLElement).style.boxShadow = "none"; }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
+                          <h3 className="bk-display" style={{ fontSize: 18, fontWeight: 700, color: "#1A1208" }}>{booking.name}</h3>
+                          <span className="bk-mono" style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", padding: "4px 10px", background: booking.status === "confirmed" ? "#dcfce7" : "#fef9c3", color: booking.status === "confirmed" ? "#166534" : "#854d0e", borderRadius: 2 }}>
+                            {booking.status}
+                          </span>
+                        </div>
+                        <p style={{ fontSize: 13, color: "#7A6E61", marginBottom: 14, display: "flex", alignItems: "center", gap: 6 }}>
+                          <Calendar style={{ width: 14, height: 14 }} /> {booking.date}
+                        </p>
+                        <button style={{ width: "100%", padding: "10px", background: "#1A1208", color: "#F5F0E8", border: "none", borderRadius: 2, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+                          View Details
+                        </button>
+                      </motion.div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Favorites */}
+              {activeTab === "favorites" && (
+                <div>
+                  <h2 className="bk-display" style={{ fontSize: 28, fontWeight: 900, color: "#1A1208", marginBottom: 24 }}>Saved Favorites</h2>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 3 }}>
+                    {[
+                      { name: "Lake Apo", type: "Nature" },
+                      { name: "Pineapple Plantations", type: "Agritourism" },
+                      { name: "Kaamulan Festival", type: "Cultural" }
+                    ].map((fav, i) => (
+                      <motion.div key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
+                        style={{ background: "#fff", border: "1px solid #DDD6C8", borderRadius: 2, padding: "20px", display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }}>
+                        <div>
+                          <h3 className="bk-display" style={{ fontSize: 18, fontWeight: 700, color: "#1A1208", marginBottom: 4 }}>{fav.name}</h3>
+                          <p className="bk-mono" style={{ fontSize: 11, color: "#7A6E61", letterSpacing: "0.15em", textTransform: "uppercase" }}>{fav.type}</p>
+                        </div>
+                        <Heart style={{ width: 20, height: 20, color: "#C4622D", fill: "#C4622D" }} />
+                      </motion.div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Reviews */}
+              {activeTab === "reviews" && (
+                <div>
+                  <h2 className="bk-display" style={{ fontSize: 28, fontWeight: 900, color: "#1A1208", marginBottom: 24 }}>Your Reviews</h2>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                    {[
+                      { place: "Dahilayan Adventure Park", rating: 5, text: "Amazing experience! The staff was friendly and the views were incredible." },
+                      { place: "Local Restaurant", rating: 4, text: "Great food and authentic atmosphere. Highly recommended!" }
+                    ].map((review, i) => (
+                      <motion.div key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
+                        style={{ background: "#fff", border: "1px solid #DDD6C8", borderRadius: 2, padding: "20px" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
+                          <h3 className="bk-display" style={{ fontSize: 18, fontWeight: 700, color: "#1A1208" }}>{review.place}</h3>
+                          <span style={{ fontSize: 14, color: "#D4A853" }}>{'★'.repeat(review.rating)}</span>
+                        </div>
+                        <p style={{ fontSize: 14, color: "#7A6E61", lineHeight: 1.6, marginBottom: 12 }}>{review.text}</p>
+                        <div style={{ display: "flex", gap: 8 }}>
+                          <button style={{ padding: "8px 14px", background: "#1A1208", color: "#F5F0E8", border: "none", borderRadius: 2, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
+                            Edit
+                          </button>
+                          <button style={{ padding: "8px 14px", background: "#FAF7F2", color: "#C4622D", border: "1px solid #DDD6C8", borderRadius: 2, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
+                            Delete
+                          </button>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

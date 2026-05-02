@@ -1,70 +1,72 @@
-// Bukidnon-inspired color theme
-// Green mountains, lush forests, and natural earth tones
+// BukidGo Logo-Inspired Color Theme
+// Deep forest greens, warm earth tones, golden accents, and cream backgrounds
 
 export const BUKIDNON_THEME = {
-  // Primary colors - Mountain greens
+  // Primary colors - Deep forest from logo
   primary: {
-    dark: "#1B4D2E",      // Deep forest green
-    main: "#2D7A4A",      // Mountain green
-    light: "#4A9D6F",     // Light forest green
-    lighter: "#7BC97F",   // Lighter green
+    dark: "#0A3D2F",      // Deep forest green (logo primary)
+    main: "#1E4D2B",      // Rich forest green
+    light: "#2D7A4A",     // Mountain green
+    lighter: "#4A9D6F",   // Light forest green
   },
   
-  // Secondary colors - Earth and sky
+  // Secondary colors - Earth and warmth from logo
   secondary: {
-    earth: "#8B6F47",     // Mountain earth brown
-    sky: "#87CEEB",       // Mountain sky blue
-    accent: "#D4A574",    // Golden accent
+    earth: "#8B4513",     // Warm earth brown (logo accent)
+    warm: "#C4622D",      // Warm brown accent
+    gold: "#F5C400",      // Golden accent (logo highlight)
+    accent: "#D4A574",    // Muted golden
   },
   
-  // Neutral colors - Natural tones
+  // Neutral colors - Cream and natural tones
   neutral: {
-    dark: "#0F2818",      // Very dark green (almost black)
-    text: "#1A3A2A",      // Dark text
-    light: "#E8F3ED",     // Light background
-    lighter: "#F5F9F7",   // Lighter background
-    border: "#C8DDD4",    // Border color
+    dark: "#1A1208",      // Very dark brown (almost black)
+    text: "#2D2D2D",      // Dark text
+    light: "#F5F0E8",     // Warm cream background
+    lighter: "#F5F5F0",   // Light cream background
+    border: "#DDD6C8",    // Warm border color
   },
   
   // Accent colors
   accent: {
-    success: "#4A9D6F",   // Green success
-    warning: "#D4A574",   // Golden warning
-    danger: "#C85A54",    // Muted red
-    info: "#5B8DBE",      // Mountain blue
+    success: "#2D7A4A",   // Green success
+    warning: "#F5C400",   // Golden warning
+    danger: "#C4622D",    // Warm red
+    info: "#2D7A4A",      // Forest info
   },
   
   // Gradients
   gradients: {
-    mountainGreen: "linear-gradient(135deg, #1B4D2E 0%, #2D7A4A 100%)",
-    forestToSky: "linear-gradient(180deg, #2D7A4A 0%, #87CEEB 100%)",
-    earthToGreen: "linear-gradient(135deg, #8B6F47 0%, #4A9D6F 100%)",
+    mountainGreen: "linear-gradient(135deg, #0A3D2F 0%, #1E4D2B 100%)",
+    earthToGold: "linear-gradient(135deg, #8B4513 0%, #F5C400 100%)",
+    forestWarm: "linear-gradient(135deg, #1E4D2B 0%, #C4622D 100%)",
   },
 };
 
 // Export individual color values for easy access
 export const colors = {
-  // Primary
-  darkGreen: "#1B4D2E",
+  // Primary - Deep forest
+  deepForest: "#0A3D2F",
+  forestGreen: "#1E4D2B",
   mountainGreen: "#2D7A4A",
   lightGreen: "#4A9D6F",
-  forestGreen: "#7BC97F",
   
-  // Secondary
-  earthBrown: "#8B6F47",
-  skyBlue: "#87CEEB",
-  goldenAccent: "#D4A574",
+  // Secondary - Earth and warmth
+  earthBrown: "#8B4513",
+  warmBrown: "#C4622D",
+  goldenAccent: "#F5C400",
+  mutedGold: "#D4A574",
   
-  // Neutral
-  veryDarkGreen: "#0F2818",
-  darkText: "#1A3A2A",
-  lightBg: "#E8F3ED",
-  lighterBg: "#F5F9F7",
-  borderColor: "#C8DDD4",
+  // Neutral - Cream palette
+  darkBrown: "#1A1208",
+  darkText: "#2D2D2D",
+  creamBg: "#F5F0E8",
+  lightCream: "#F5F5F0",
+  warmBorder: "#DDD6C8",
   
   // Accents
-  success: "#4A9D6F",
-  warning: "#D4A574",
-  danger: "#C85A54",
-  info: "#5B8DBE",
+  success: "#2D7A4A",
+  warning: "#F5C400",
+  danger: "#C4622D",
+  info: "#2D7A4A",
 };
